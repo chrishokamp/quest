@@ -12,6 +12,7 @@ public class Feature9987 extends Feature {
 	}
 
 	@Override
+	// chris: looks to be a cast error here
 	public void run(Sentence source, Sentence target) {
         Integer qualityValue = (Integer) target.getValue("terminology");
 		setValue(new Float(qualityValue));

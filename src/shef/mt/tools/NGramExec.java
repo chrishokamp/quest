@@ -74,6 +74,7 @@ public class NGramExec {
         try {
             String[] args = new String[]{path + "ngram", "-lm", lmFile, "-order", nSize + "", "-debug", "1", "-ppl", inputFile};
             FileWriter fw = new FileWriter(outputFile);
+	    System.out.printf("Chris - The paths for the SRILM call: %s ", java.util.Arrays.toString(args)); 
             Process process = new ProcessBuilder(args).start();
             process.waitFor();
             InputStream is = process.getInputStream();
@@ -121,6 +122,7 @@ public class NGramExec {
         Logger.log("Executing: " + execProcess);
         try {
             String[] args = new String[]{path + "ngram", "-lm", lmFile, "-order 3", "-debug", "1", "-ppl", inputFile, " > ", outputFile};
+	    System.out.printf("Chris - The paths for the SRILM call: %s ", java.util.Arrays.toString(args)); 
             FileWriter fw = new FileWriter(outputFile);
             Process process = new ProcessBuilder(args).start();
             InputStream is = process.getInputStream();

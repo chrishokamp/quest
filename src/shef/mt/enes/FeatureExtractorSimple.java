@@ -109,6 +109,7 @@ public class FeatureExtractorSimple{
         input = workDir + File.separator + resourceManager.getString("input");
         output = workDir + File.separator + resourceManager.getString("output");
         System.out.println("input=" + input + "  output=" + output);
+        System.out.println("Chris testing");
 
     }
 
