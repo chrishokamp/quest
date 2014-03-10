@@ -1,12 +1,14 @@
 package shef.mt.features.util;
 
 import shef.mt.util.Logger;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.TreeSet;
 import java.util.regex.*;
 import java.util.*;
@@ -16,7 +18,7 @@ import shef.mt.tools.ResourceManager;
 
 /**
  * The FeatureManager controls the loading, instantiation and running of the
- * features. <br> It parses the user-supplied list of feature indeces and uses a
+ * features. <br> It parses the user-supplied list of feature indices and uses a
  * FeatureLoader to instantiate the selected features<br> It also provides a
  * method for running the features over a given pair of source-target Sentences
  *
@@ -162,18 +164,27 @@ public class FeatureManager {
     }
 
     public void printFeatures() {
-        Iterator<String> it = featureList.iterator();
+    	// Chris - this is a bug - featureList is never initialized
+        //Iterator<String> it = featureList.iterator();
+        Iterator<Entry<String, Feature>> it = features.entrySet().iterator();
         while (it.hasNext()) {
             System.out.println(it.next());
         }
     }
 
     //HACK
+    // Chris - run all of the features in the list over this source-target pair
     public String runFeatures(Sentence source, Sentence target) {
         StringBuffer result = new StringBuffer();
         Set<String> fIndeces = features.keySet();
 
         ArrayList<String> featureIndeces = new ArrayList<String>(fIndeces);
+        
+        // Chris - working test 
+//        for (String feat : fIndeces) {
+//        	System.out.println("Here's a feature from fIndeces: " + feat);
+//        	System.out.println("Here's it's description: " + features.get(feat).getDescription());
+//        }
 
         Collections.sort(featureIndeces);
 //		System.out.println(featureIndeces.size()+" feature indeces: "+ featureIndeces);
@@ -182,10 +193,12 @@ public class FeatureManager {
         while (it.hasNext()) {
             String index = it.next();
             f = features.get(index);
-//			System.out.println(index);
+			System.out.println("inside features, index of the next feature is:");
+			System.out.println(index);
 
             // Modified by José de Souza
             // every new sentence pair has new features
+			// Chris - why would this be the case -- in the end, we need every feature vector to be the same length
             // therefore, the feature object state must be reset
             f.reset();
 
@@ -206,14 +219,25 @@ public class FeatureManager {
 //		System.out.println("Result:");
 //		System.out.println(result.toString());
 //		System.out.println("");
+        
         return result.toString();
     }
 
-    public void printFeatureIndeces() {
-        Iterator<String> it = features.keySet().iterator();
+    public String printFeatureIndices() {
+    	// Chris- do this type conversion to make sure that the features are in the same order
+    	// this is so we can label the output columns correctly
+    	ArrayList<String> feats = new ArrayList<String>(features.keySet()); 
+    	Collections.sort(feats);
+        Iterator<String> it = feats.iterator();
+        String featureIndex = "";
         while (it.hasNext()) {
-            System.out.print(it.next() + "\t");
+        	String nextIndex = it.next();
+            System.out.print(nextIndex + "\t");
+
+            featureIndex = featureIndex + "\t" + nextIndex;
         }
         System.out.println();
+        String newIndex = featureIndex.replaceFirst("\t[0-9]+\t$", "");
+        return newIndex;
     }
 }

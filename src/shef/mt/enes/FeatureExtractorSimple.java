@@ -233,9 +233,6 @@ public class FeatureExtractorSimple{
 					}
 
 				}
-				
-					
-
 			}
 
             if (line.hasOption("mode")) {
@@ -663,6 +660,10 @@ public class FeatureExtractorSimple{
             BufferedReader brTarget = new BufferedReader(new FileReader(
                     targetFile));
             BufferedWriter output = new BufferedWriter(new FileWriter(out));
+            // Chris - write feature names as the top line of the TSV
+            
+            
+            
             BufferedReader posSource = null;
             BufferedReader posTarget = null;
             boolean posSourceExists = ResourceManager
@@ -672,9 +673,6 @@ public class FeatureExtractorSimple{
             POSProcessor posSourceProc = null;
             POSProcessor posTargetProc = null;
             
-            
-            
-             
           
             //lefterav: Berkeley parser modifications start here
             //Check if user has defined the grammar files for source 
@@ -787,11 +785,17 @@ public class FeatureExtractorSimple{
             /*
              * End modification for Triggers
              */
-            
-             
-	   
-	    
 
+            // Chris: this is where we actually calculate the features for each line in the data
+            // print the first line in the tsv as a column index
+            // Chris - testing 
+            System.out.println("FeatureExtractorSimple: printing features");
+//                featureManager.printFeatures();
+            output.write(featureManager.printFeatureIndices());
+            output.newLine();
+            // end testing
+            
+            
             //read in each line from the source and target files
             //create a sentence from each
             //process each sentence
@@ -803,11 +807,8 @@ public class FeatureExtractorSimple{
                 targetSent = new Sentence(lineTarget, sentCount);
 
          //       System.out.println("Processing sentence "+sentCount);
-           //     System.out.println("SORCE: " + sourceSent.getText());
+           //     System.out.println("SOURCE: " + sourceSent.getText());
              //   System.out.println("TARGET: " + targetSent.getText());
-               
-                
-                
                 
                 if (posSourceExists) {
                     posSourceProc.processSentence(sourceSent);
@@ -845,11 +846,13 @@ public class FeatureExtractorSimple{
                 }
                 // end modification by David
                 
-                
                 //MQM kicks in
                 MQMManager.getInstance().processNextParallelSentences(sourceSent, targetSent);
                 
                 ++sentCount;
+                
+                
+                
                 output.write(featureManager.runFeatures(sourceSent, targetSent));
                 output.newLine();
                 lineSource = brSource.readLine();
@@ -865,6 +868,10 @@ public class FeatureExtractorSimple{
             brSource.close();
             brTarget.close();
             output.close();
+            
+            // Chris: just to test
+            featureManager.printFeatureIndices();
+           
             Logger.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -982,7 +989,7 @@ public class FeatureExtractorSimple{
 			brSource.close();
 			brTarget.close();
 			output.close();
-			featureManager.printFeatureIndeces();
+			featureManager.printFeatureIndices();
 			Logger.close();
 		} catch (Exception e) {
 			e.printStackTrace();

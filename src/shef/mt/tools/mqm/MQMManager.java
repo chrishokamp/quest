@@ -43,7 +43,7 @@ public class MQMManager {
     }
 
     /**
-     * Initialize resources and processors that has been config, and register them in Resource Manager
+     * Initialize resources and processors from the configuration, and register them in Resource Manager
      * @param propertiesManager
      * @return
      */
