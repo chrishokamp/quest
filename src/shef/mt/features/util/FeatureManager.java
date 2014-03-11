@@ -220,7 +220,7 @@ public class FeatureManager {
 //		System.out.println(result.toString());
 //		System.out.println("");
         
-        return result.toString();
+        return result.toString().trim();
     }
 
     public String printFeatureIndices() {
