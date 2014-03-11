@@ -983,7 +983,7 @@ public class FeatureExtractorSimple{
 
 				++sentCount;
 				output.write(featureManager.runFeatures(sourceSent, targetSent));
-				output.write("\r\n");
+				output.write("\n");
 
 }
 			brSource.close();

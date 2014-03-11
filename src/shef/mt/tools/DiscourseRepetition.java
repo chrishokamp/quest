@@ -23,6 +23,9 @@ import shef.mt.util.PropertiesManager;
  * 
  * @author carol
  */
+
+// Chris - these features are currently outputting NaN - why???
+
 public class DiscourseRepetition extends ResourceProcessor {
     private HashMap<String,Integer> wordRepetition;
     private HashMap<String,Integer> lemmaRepetition;

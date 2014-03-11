@@ -237,7 +237,8 @@ public class FeatureManager {
             featureIndex = featureIndex + "\t" + nextIndex;
         }
         System.out.println();
-        String newIndex = featureIndex.replaceFirst("\t[0-9]+\t$", "");
+//        String newIndex = featureIndex.replaceFirst("\t[0-9]+\t$", "");
+        String newIndex = featureIndex.trim();
         return newIndex;
     }
 }
