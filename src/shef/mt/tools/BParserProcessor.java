@@ -29,6 +29,9 @@ public class BParserProcessor extends ResourceProcessor {
 	 *    responsible for
 	 */
 	public void initialize(String inputFile, PropertiesManager rm, String language){
+		
+		System.out.println("Initializing Berkley parser with params: inputFile: " + inputFile + " Language: " + language);
+
 		//get the grammar filename from the configuration file
 		String grammarFilename = rm.getString(language + ".bparser.grammar");
 		String kbest_entry = rm.getString(language + ".bparser.kbest");

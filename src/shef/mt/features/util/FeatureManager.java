@@ -175,7 +175,9 @@ public class FeatureManager {
     //HACK
     // Chris - run all of the features in the list over this source-target pair
     public String runFeatures(Sentence source, Sentence target) {
+    	// this holds the result of all of the features running
         StringBuffer result = new StringBuffer();
+        // this is the set of all feature indices
         Set<String> fIndeces = features.keySet();
 
         ArrayList<String> featureIndeces = new ArrayList<String>(fIndeces);
@@ -193,15 +195,15 @@ public class FeatureManager {
         while (it.hasNext()) {
             String index = it.next();
             f = features.get(index);
-			System.out.println("inside features, index of the next feature is:");
-			System.out.println(index);
+//			System.out.println("inside features, index of the next feature is:");
+//			System.out.println(index);
 
             // Modified by José de Souza
             // every new sentence pair has new features
 			// Chris - why would this be the case -- in the end, we need every feature vector to be the same length
             // therefore, the feature object state must be reset
             f.reset();
-
+            System.out.println("checking if feature: " + index + " is computable...");
             if (f.isComputable()) {
                 f.run(source, target);
                 Integer featsNumber = f.getFeaturesNumber();

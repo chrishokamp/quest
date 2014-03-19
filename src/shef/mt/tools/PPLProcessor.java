@@ -30,6 +30,7 @@ public class PPLProcessor extends ResourceProcessor {
             e.printStackTrace();
         }
         for (int i = 0; i < valNames.length; i++) {
+        	System.out.println("PPLProcessor - value is: " + valNames[i]);
             ResourceManager.registerResource(valNames[i]);
         }
     }

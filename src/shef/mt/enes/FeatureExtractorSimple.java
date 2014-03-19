@@ -332,6 +332,9 @@ public class FeatureExtractorSimple{
      * by features 8-13
      */
     private static void runNGramPPL() {
+    	
+    	System.out.println("inside runNgramPPL, sourceFile: " + sourceFile + " targetFile: " + targetFile);
+    	
         // required by BB features 8-13
         NGramExec nge = new NGramExec(
                 resourceManager.getString("tools.ngram.path"), forceRun);
@@ -577,8 +580,11 @@ public class FeatureExtractorSimple{
     public void runBB() {
         File f = new File(sourceFile);
         String sourceFileName = f.getName();
+        System.out.println("sourceFileName: " + sourceFileName);
         f = new File(targetFile);
         String targetFileName = f.getName();
+        System.out.println("targetFileName: " + targetFileName);
+        
         String outputFileName = sourceFileName + "_to_" + targetFileName
                 + ".out";
 
@@ -597,14 +603,17 @@ public class FeatureExtractorSimple{
         String pplSourcePath = resourceManager.getString("input")
                 + File.separator + sourceLang + File.separator + sourceFileName
                 + resourceManager.getString("tools.ngram.output.ext");
+        System.out.println("pplSourcePath is: " + pplSourcePath);
         String pplTargetPath = resourceManager.getString("input")
                 + File.separator + targetLang + File.separator + targetFileName
                 + resourceManager.getString("tools.ngram.output.ext");
+        System.out.println("pplTargetPath is: " + pplTargetPath);
 
 
         String pplPOSTargetPath = resourceManager.getString("input")
                 + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
                 + resourceManager.getString("tools.ngram.output.ext");
+        
         runNGramPPL();
 
         FileModel fm = new FileModel(sourceFile,
@@ -612,17 +621,21 @@ public class FeatureExtractorSimple{
 
         // FileModel fm = new FileModel(sourceFile,
         //     resourceManager.getString("source" + ".corpus"));
+        
 
-
+        // Chris - initialize the PPLProcessors with the resource names in the string array
         PPLProcessor pplProcSource = new PPLProcessor(pplSourcePath,
                 new String[]{"logprob", "ppl", "ppl1"});
         PPLProcessor pplProcTarget = new PPLProcessor(pplTargetPath,
                 new String[]{"logprob", "ppl", "ppl1"});
+        System.out.println("Initialized PPL processors");
 
         String sourcePosOutput = null;
         String targetPosOutput = null;
+
         PPLProcessor pplPosTarget = null;
         if (!isBaseline) {
+        	System.out.println("THIS IS NOT THE BASELINE");
             sourcePosOutput = runPOS(sourceFile, sourceLang, "source");
             targetPosOutput = runPOS(targetFile, targetLang, "target");
 
@@ -677,24 +690,30 @@ public class FeatureExtractorSimple{
             //lefterav: Berkeley parser modifications start here
             //Check if user has defined the grammar files for source 
             //and target language
+            
+           // Chris - the Berkeley parser syntactic features aren't working, trying to fix this....
 
            //   if ( ResourceManager.isRegistered("BParser")){   
-            boolean bp = false; 
-            String temp = resourceManager.getString("BP");
-            if (null != temp && temp.equals("1")) {
-                bp = true ;
-            }
+           //boolean bp = false; 
+           boolean bp = true; 
+//           if ( ResourceManager.isRegistered("BParser")){   
+//            String temp = resourceManager.getString("BP");
+//            if (null != temp && temp.equals("1")) {
+//                bp = true ;
+//            }
+//           }
 
             BParserProcessor sourceParserProcessor = null;
-             BParserProcessor targetParserProcessor = null;
+            BParserProcessor targetParserProcessor = null;
              
           if (bp) {
+       	  System.out.println("CHRIS: trying to initialize the Berkeley parser...");
             sourceParserProcessor = new BParserProcessor();
             targetParserProcessor = new BParserProcessor();
             sourceParserProcessor.initialize(sourceFile, resourceManager, sourceLang);
             targetParserProcessor.initialize(targetFile, resourceManager, targetLang);   
           }
-   // } 
+//    } 
     
     
      /**
@@ -733,6 +752,7 @@ public class FeatureExtractorSimple{
             Sentence targetSent;
             int sentCount = 0;
 
+            // Chris - working here - there is a bug
             String lineSource = brSource.readLine();
             String lineTarget = brTarget.readLine();
             
@@ -800,15 +820,18 @@ public class FeatureExtractorSimple{
             //create a sentence from each
             //process each sentence
             //run the features on the sentences
+            System.out.println("About to extract the features");
+            System.out.println("printing the resources...");
+            ResourceManager.printResources();
             while ((lineSource != null) && (lineTarget != null)) {
 
                 //lineSource = lineSource.trim().substring(lineSource.indexOf(" ")).replace("+", "");
                 sourceSent = new Sentence(lineSource, sentCount);
                 targetSent = new Sentence(lineTarget, sentCount);
 
-         //       System.out.println("Processing sentence "+sentCount);
-           //     System.out.println("SOURCE: " + sourceSent.getText());
-             //   System.out.println("TARGET: " + targetSent.getText());
+                System.out.println("Processing sentence "+sentCount);
+                System.out.println("SOURCE: " + sourceSent.getText());
+                System.out.println("TARGET: " + targetSent.getText());
                 
                 if (posSourceExists) {
                     posSourceProc.processSentence(sourceSent);
@@ -820,11 +843,12 @@ public class FeatureExtractorSimple{
                 targetSent.computeNGrams(3);
                 pplProcSource.processNextSentence(sourceSent);
                 pplProcTarget.processNextSentence(targetSent);
-                if (!isBaseline) {
-                    pplPosTarget.processNextSentence(targetSent);
-                }
+//                if (!isBaseline) {
+//                    pplPosTarget.processNextSentence(targetSent);
+//                }
              
-                   //lefterav: Parse code here
+                //lefterav: Parse code here
+                // Chris - working on getting syntactic features
         
                 if(bp){
                 sourceParserProcessor.processNextSentence(sourceSent);
@@ -943,8 +967,10 @@ public class FeatureExtractorSimple{
 
 		File f = new File(sourceFile);
 		String sourceFileName = f.getName();
+		System.out.println("Source file name is: " + sourceFileName);
 		f = new File(targetFile);
 		String targetFileName = f.getName();
+		System.out.println("Source file name is: " + targetFileName);
 
 		String outputFileName = sourceFileName + "_to_" + targetFileName
 				+ ".out";

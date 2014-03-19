@@ -79,10 +79,6 @@
     <feature class="shef.mt.features.impl.bb.Feature1092" description="ratio of percentage of nouns in the source and target" index="1092"/>
     <feature class="shef.mt.features.impl.bb.Feature1093" description="ratio of percentage of verbs in the source and target" index="1093"/>
     <feature class="shef.mt.features.impl.bb.Feature1094" description="ratio of percentage of pronouns in the source and target" index="1094"/>
-    <!--feature class="shef.mt.features.impl.bb.Feature1097" description="coherence of target" index="1097"/>
-    <feature class="shef.mt.features.impl.bb.Feature1098" description="number of dependencies with aligned constituents normalized by the total number of dependencies (max between source and target)" index="1098"/>
-    <feature class="shef.mt.features.impl.bb.Feature1099" description="number of dependencies with aligned constituents normalized by the total number of dependencies (max between source and target), with the order of the constituents ignored" index="1099"/>
-    <feature class="shef.mt.features.impl.bb.Feature1100" description="number of dependencies with well aligned constituents (Giza threshold 0.1) normalized by the total number of dependencies (max between source and target)" index="1100"/>
     <feature class="shef.mt.features.impl.bb.Feature1101" description="absolute difference between the depth of the syntactic tree for the source and the depth of the syntactic tree for the target" index="1101"/>
     <feature class="shef.mt.features.impl.bb.Feature1102" description="number of prepositional phrases in the source" index="1102"/>
     <feature class="shef.mt.features.impl.bb.Feature1103" description="number of prepositional phrases in the target" index="1103"/>
@@ -97,7 +93,12 @@
     <feature class="shef.mt.features.impl.bb.Feature1112" description="absolute difference between the number of ADVPs in the source and target" index="1112"/>
     <feature class="shef.mt.features.impl.bb.Feature1113" description="absolute difference between the number of ADVP phrases in the source and target normalised by the total number of phrasal tags in the sentence" index="1113"/>
     <feature class="shef.mt.features.impl.bb.Feature1114" description="absolute difference between the number of CONJPs in the source and target" index="1114"/>
-    <feature class="shef.mt.features.impl.bb.Feature1115" description="absolute difference between the number of CONJP phrases in the source and target normalised by the total number of phrasal tags in the sentence" index="1115"/>
+	<feature class="shef.mt.features.impl.bb.Feature1115" description="absolute difference between the number of CONJP phrases in the source and target normalised by the total number of phrasal tags in the sentence" index="1115"/>
+    <!--feature class="shef.mt.features.impl.bb.Feature1097" description="coherence of target" index="1097"/>
+    <feature class="shef.mt.features.impl.bb.Feature1098" description="number of dependencies with aligned constituents normalized by the total number of dependencies (max between source and target)" index="1098"/>
+    <feature class="shef.mt.features.impl.bb.Feature1099" description="number of dependencies with aligned constituents normalized by the total number of dependencies (max between source and target), with the order of the constituents ignored" index="1099"/>
+	<feature class="shef.mt.features.impl.bb.Feature1100" description="number of dependencies with well aligned constituents (Giza threshold 0.1) normalized by the total number of dependencies (max between source and target)" index="1100"/>-->
+	<!--
     <feature class="shef.mt.features.impl.bb.Feature1116" description="Named Entity feature: difference in number of PERSON entities in source and target normalised by total number of person entities (max between english and arabic)" index="1116"/>
     <feature class="shef.mt.features.impl.bb.Feature1117" description="Named Entity feature: difference in number of LOCATION entities in source and target normalised by total number of person entities (max between english and arabic)" index="1117"/>
     <feature class="shef.mt.features.impl.bb.Feature1118" description="Named Entity feature: difference in number of ORGANIZATION entities in source and target normalised by total number of person entities (max between english and arabic)" index="1118"/>
