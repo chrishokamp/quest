@@ -41,6 +41,8 @@ import os
 import sys
 import yaml
 
+from load_and_preprocess import *
+
 from customize_scorer import pearson_corrcoef, binary_precision, classify_report_bin, classify_report_bin_regression, classify_report_regression
 
 __all__ = []
@@ -440,10 +442,19 @@ def run(config):
     log.debug("X_test: %s" % x_test_path)
     log.debug("y_test_path: %s" % y_test_path)
 
+    # Chris - working - allow specification of the ORIGINAL dataset (not the one already split into train/test 
     # open feature and response files
-    X_train, y_train, X_test, y_test, labels = \
-    open_datasets(x_train_path, y_train_path, x_test_path,
-                  y_test_path, separator, labels_path)
+    X_train, y_train, X_test, y_test = \
+        load_files([x_train_path, y_train_path, x_test_path, y_test_path])
+
+    print("printing shapes...")
+    print(X_train.shape)
+    print(y_train.shape)
+    print(X_test.shape)
+    print(y_test.shape)
+    
+    #X_train, y_train, X_test, y_test, labels = \
+    #open_datasets(x_train_path, y_train_path, x_test_path,
     
     # Chris: working - add proper preprocessing with pandas -- remove unscalable features (zeros and NaNs), make sure the feature indeces are preserved
 
