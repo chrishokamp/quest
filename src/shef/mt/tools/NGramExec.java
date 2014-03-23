@@ -68,9 +68,9 @@ public class NGramExec {
         long start = System.currentTimeMillis();
 
         Logger.log("Running ngram for computing perplexities on input file:" + inputFile + " with lm file: " + lmFile);
-        String execProcess = path + "ngram -lm " + lmFile + " -order 3 -debug 1 -ppl " + inputFile + " > " + outputFile;
+        // just used for logging
+        String execProcess = path + "ngram -lm " + lmFile + " -order ? -debug 1 -ppl " + inputFile + " > " + outputFile;
         Logger.log("Executing: " + execProcess);
-        //              	System.out.println("Executing: "+execProcess);
         try {
             String[] args = new String[]{path + "ngram", "-lm", lmFile, "-order", nSize + "", "-debug", "1", "-ppl", inputFile};
             FileWriter fw = new FileWriter(outputFile);

@@ -55,14 +55,20 @@ public class BParserProcessor extends ResourceProcessor {
 		ResourceManager.registerResource("BParser");
 	}
 	
-
+	private void print(String s) {
+		System.out.println("from bparser: " + s);
+	}
 	@Override
 	public void processNextSentence(Sentence s) {
 		
 		//ask the parser to perform a parse of the sentence
 		parser.getParseFeatures(s.getText(), tokenizer);
 		
+		
+		
 		s.setValue("bparser.parse", parser.getParseTree());
+		// Chris: testing here
+		print(parser.getParseTree());
 		s.setValue("bparser.loglikelihood", parser.getLoglikelihood());
 		s.setValue("bparser.avgConfidence", parser.getAvgConfidence());
 		s.setValue("bparser.bestParseConfidence", parser.getBestParseConfidence());

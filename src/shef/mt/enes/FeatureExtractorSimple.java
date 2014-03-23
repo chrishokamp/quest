@@ -109,7 +109,6 @@ public class FeatureExtractorSimple{
         input = workDir + File.separator + resourceManager.getString("input");
         output = workDir + File.separator + resourceManager.getString("output");
         System.out.println("input=" + input + "  output=" + output);
-        System.out.println("Chris testing");
 
     }
 
@@ -331,6 +330,8 @@ public class FeatureExtractorSimple{
      * Computes the perplexity and log probability for the source file Required
      * by features 8-13
      */
+    // Chris: you need to know the ngram param of the language model
+    // The default calls to nge.runNGramPerplex use the overloaded implementation with a default order=3 (see tools.NGraMExec.java)
     private static void runNGramPPL() {
     	
     	System.out.println("inside runNgramPPL, sourceFile: " + sourceFile + " targetFile: " + targetFile);
@@ -694,8 +695,8 @@ public class FeatureExtractorSimple{
            // Chris - the Berkeley parser syntactic features aren't working, trying to fix this....
 
            //   if ( ResourceManager.isRegistered("BParser")){   
-           //boolean bp = false; 
-           boolean bp = true; 
+           boolean bp = false; 
+//           boolean bp = true; 
 //           if ( ResourceManager.isRegistered("BParser")){   
 //            String temp = resourceManager.getString("BP");
 //            if (null != temp && temp.equals("1")) {
@@ -734,32 +735,31 @@ public class FeatureExtractorSimple{
              targetTopicDistributionProcessor = new TopicDistributionProcessor(targetTopicDistributionFile, "targetTopicDistribution");
             
           }
-            /* END: Added by Raphael Rubino for the Topic Model Features
-            */ 
+        /* END: Added by Raphael Rubino for the Topic Model Features
+        */ 
 
-            if (!isBaseline) {
-                if (posSourceExists) {
-                    posSourceProc = new POSProcessor(sourcePosOutput);
-                    posSource = new BufferedReader(new InputStreamReader(new FileInputStream(sourcePosOutput), "utf-8"));
-                }
-                if (posTargetExists) {
-                    posTargetProc = new POSProcessor(targetPosOutput);
-                    posTarget = new BufferedReader(new InputStreamReader(new FileInputStream(targetPosOutput)));
-                }
+        if (!isBaseline) {
+            if (posSourceExists) {
+                posSourceProc = new POSProcessor(sourcePosOutput);
+                posSource = new BufferedReader(new InputStreamReader(new FileInputStream(sourcePosOutput), "utf-8"));
             }
-            ResourceManager.printResources();
-            Sentence sourceSent;
-            Sentence targetSent;
-            int sentCount = 0;
+            if (posTargetExists) {
+                posTargetProc = new POSProcessor(targetPosOutput);
+                posTarget = new BufferedReader(new InputStreamReader(new FileInputStream(targetPosOutput)));
+            }
+        }
+        ResourceManager.printResources();
+        Sentence sourceSent;
+        Sentence targetSent;
+        int sentCount = 0;
 
-            // Chris - working here - there is a bug
-            String lineSource = brSource.readLine();
-            String lineTarget = brTarget.readLine();
-            
-             /**
-             * Triggers (by David Langlois)
-             */
-            
+        String lineSource = brSource.readLine();
+        String lineTarget = brTarget.readLine();
+        
+         /**
+         * Triggers (by David Langlois)
+         */
+        
             boolean tr = false; 
             String temp2 = resourceManager.getString("TR");
             if (temp2 != null && temp2.equals("1")) {
@@ -810,9 +810,11 @@ public class FeatureExtractorSimple{
             // print the first line in the tsv as a column index
             // Chris - testing 
             System.out.println("FeatureExtractorSimple: printing features");
-//                featureManager.printFeatures();
-            output.write(featureManager.printFeatureIndices());
-            output.newLine();
+////                featureManager.printFeatures();
+            String orgFeatureIndexString = featureManager.printFeatureIndices();
+            System.out.println("the original sorted feature indeces: " + orgFeatureIndexString);
+//            output.write(featureIndexString);
+//            output.newLine();
             // end testing
             
             
@@ -823,6 +825,9 @@ public class FeatureExtractorSimple{
             System.out.println("About to extract the features");
             System.out.println("printing the resources...");
             ResourceManager.printResources();
+            
+//            String newFeatureIndexString = featureManager.printFeatureIndices();
+            boolean firstTime = true;
             while ((lineSource != null) && (lineTarget != null)) {
 
                 //lineSource = lineSource.trim().substring(lineSource.indexOf(" ")).replace("+", "");
@@ -832,6 +837,9 @@ public class FeatureExtractorSimple{
                 System.out.println("Processing sentence "+sentCount);
                 System.out.println("SOURCE: " + sourceSent.getText());
                 System.out.println("TARGET: " + targetSent.getText());
+//                System.out.println("the original feature index was: " + featureIndexString);
+//                System.out.println("the one right before this loop was: " + newFeatureIndexString);
+//                System.out.println("now if i print feature indices, its: " + featureManager.printFeatureIndices());
                 
                 if (posSourceExists) {
                     posSourceProc.processSentence(sourceSent);
@@ -857,16 +865,16 @@ public class FeatureExtractorSimple{
                 
                 if(tm){
                 
-                sourceTopicDistributionProcessor.processNextSentence(sourceSent);
-                 targetTopicDistributionProcessor.processNextSentence(targetSent);
+                	sourceTopicDistributionProcessor.processNextSentence(sourceSent);
+                	targetTopicDistributionProcessor.processNextSentence(targetSent);
                 }
                 
                 
                   // modified by David
                 if(tr){
-                itl_source_p.processNextSentence(sourceSent);
-                itl_target_p.processNextSentence(targetSent);
-                itl_source_target_p.processNextParallelSentences(sourceSent, targetSent);
+	                itl_source_p.processNextSentence(sourceSent);
+	                itl_target_p.processNextSentence(targetSent);
+	                itl_source_target_p.processNextParallelSentences(sourceSent, targetSent);
                 }
                 // end modification by David
                 
@@ -875,10 +883,21 @@ public class FeatureExtractorSimple{
                 
                 ++sentCount;
                 
-                
+               // Chris: simple hack to fix feature ordering bug 
+               if (firstTime) {
+            	   System.out.println("it's the first time");
+            	   String featureIndexString = featureManager.printFeatureIndices();
+            	   System.out.println("featureIndexString is: " + featureIndexString);
+            	   output.write(featureIndexString);
+            	   output.newLine();
+            	   firstTime = false;
+
+               }
                 
                 output.write(featureManager.runFeatures(sourceSent, targetSent));
                 output.newLine();
+                
+                // increment the line
                 lineSource = brSource.readLine();
                 lineTarget = brTarget.readLine();
             }
@@ -894,7 +913,7 @@ public class FeatureExtractorSimple{
             output.close();
             
             // Chris: just to test
-            featureManager.printFeatureIndices();
+//            featureManager.printFeatureIndices();
            
             Logger.close();
         } catch (Exception e) {

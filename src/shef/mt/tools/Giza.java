@@ -25,6 +25,9 @@ public class Giza extends Resource {
      */
     private static HashMap<String, int[]> transProbCount;
     private static HashMap<Pair, Float> translations;
+    private static HashMap<String, HashMap<String,Float>> translationMap;
+    
+    
     private static float minProb = 0.01f;
     private static float transMinProb = 0.1f;
 
@@ -43,6 +46,7 @@ public class Giza extends Resource {
         Logger.log("initiating Giza from file: " + gizaFilePath);
         transProbCount = new HashMap<String, int[]>();
         translations = new HashMap<Pair, Float>();
+        translationMap = new HashMap<String, HashMap<String,Float>>();
         if (loadGiza(gizaFilePath) != -1) {
             ResourceManager.registerResource("Giza");
         }
@@ -54,6 +58,7 @@ public class Giza extends Resource {
         System.out.println("Loading Giza...");
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-8"));
+            
             String line = br.readLine();
             while (line != null) {
                 parseLine(line);
@@ -81,6 +86,8 @@ public class Giza extends Resource {
         if (prob < minProb) {
             return;
         }
+        
+        // Chris: messy static reference with no explicit dependency
         if (!FileModel.containsWord(word)) {
             return;
         }
@@ -88,6 +95,19 @@ public class Giza extends Resource {
         if (prob >= transMinProb) {
             Pair p = new Pair(word, trans);
             translations.put(p, prob);
+            
+            HashMap<String, Float> targetTokenMap;
+            // working -- check if we've already seen this word or not
+            if (translationMap.containsKey(word)) {
+            	targetTokenMap = translationMap.get(word);
+            } else {
+            	targetTokenMap = new HashMap<String, Float>();
+            	targetTokenMap.put(trans, prob);
+            	translationMap.put(word, targetTokenMap);
+            	
+            }
+            //translationMap.put(key, value)
+            
 //			System.out.println("added translation: "+p);
         }
         //HashMap<Float,Integer> probs;
@@ -197,5 +217,16 @@ public class Giza extends Resource {
         }
 
         return result;
+    }
+
+    /**
+     * Returns a map of translations for the word (from translationMap)
+     *
+     * @param word
+     * @return a map of <translation, score> 
+     */
+    public static HashMap<String,Float> getTranslationMap(String word) {
+        word = word.trim();
+        return translationMap.get(word);
     }
 }

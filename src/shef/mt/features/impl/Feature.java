@@ -91,10 +91,10 @@ public abstract class Feature {
         Iterator<String> it = resources.iterator();
         while (result && it.hasNext()) {
         	// Chris: trying to fix the missing dependency error
-        	System.out.println("result: " + result);
+//        	System.out.println("result: " + result);
         	String nextResource = it.next();
-        	System.out.println("The next resource is: " + nextResource);
-        	System.out.println("is is registered?" + ResourceManager.isRegistered(nextResource));
+//        	System.out.println("The next resource is: " + nextResource);
+//        	System.out.println("is is registered?" + ResourceManager.isRegistered(nextResource));
 
             result &= ResourceManager.isRegistered(nextResource);
         }

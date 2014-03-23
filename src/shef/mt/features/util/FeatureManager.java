@@ -22,11 +22,12 @@ import shef.mt.tools.ResourceManager;
  * FeatureLoader to instantiate the selected features<br> It also provides a
  * method for running the features over a given pair of source-target Sentences
  *
- * @author Catalina Hallett
+ * @author Catalina Hallett, changes by Chris Hokamp
  *
  */
 public class FeatureManager {
 
+	// Chris: TODO - we need to explicitly keep the ordering of the features from the configuration
     private static HashMap<String, Feature> features;
     private static HashSet<String> featureList;
     private static FeatureLoader featureLoader;
@@ -178,9 +179,14 @@ public class FeatureManager {
     	// this holds the result of all of the features running
         StringBuffer result = new StringBuffer();
         // this is the set of all feature indices
-        Set<String> fIndeces = features.keySet();
 
-        ArrayList<String> featureIndeces = new ArrayList<String>(fIndeces);
+        ArrayList<String> featureIndeces = new ArrayList<String>(features.keySet());
+        // Chris: dirty hack to force the indices to match -- TODO: remove! -- see printFeatureIndices() below
+        Collections.sort(featureIndeces);
+        System.out.println("Sorted feature indices: ");
+        System.out.println(featureIndeces);
+        System.out.println("The output of printFeatureIndeces is:");
+        System.out.println(printFeatureIndices());
         
         // Chris - working test 
 //        for (String feat : fIndeces) {
@@ -188,27 +194,30 @@ public class FeatureManager {
 //        	System.out.println("Here's it's description: " + features.get(feat).getDescription());
 //        }
 
-        Collections.sort(featureIndeces);
+//        Collections.sort(featureIndeces);
 //		System.out.println(featureIndeces.size()+" feature indeces: "+ featureIndeces);
         Iterator<String> it = featureIndeces.iterator();
         Feature f;
+        int featureCount = 0;
         while (it.hasNext()) {
+        	featureCount++;
             String index = it.next();
             f = features.get(index);
-//			System.out.println("inside features, index of the next feature is:");
-//			System.out.println(index);
+     		System.out.println("inside features, index of the next feature is:");
+			System.out.println(index);
 
             // Modified by José de Souza
             // every new sentence pair has new features
 			// Chris - why would this be the case -- in the end, we need every feature vector to be the same length
             // therefore, the feature object state must be reset
             f.reset();
-            System.out.println("checking if feature: " + index + " is computable...");
+//            System.out.println("checking if feature: " + index + " is computable...");
             if (f.isComputable()) {
                 f.run(source, target);
                 Integer featsNumber = f.getFeaturesNumber();
                 for (int i = 1; i <= featsNumber; i++) {
                     result.append(f.getValue(i) + "\t");
+                    System.out.println("the value of f: " + i + " is: " + f.getValue(i));
             }
 
             } else {
@@ -218,9 +227,10 @@ public class FeatureManager {
 //				System.out.println(features.size());
             }
         }
-//		System.out.println("Result:");
-//		System.out.println(result.toString());
-//		System.out.println("");
+      	System.out.println("featureCount: " + featureCount);
+		System.out.println("Result:");
+		System.out.println(result.toString());
+		System.out.println("");
         
         return result.toString().trim();
     }
@@ -234,11 +244,10 @@ public class FeatureManager {
         String featureIndex = "";
         while (it.hasNext()) {
         	String nextIndex = it.next();
-            System.out.print(nextIndex + "\t");
+            //System.out.print(nextIndex + "\t");
 
             featureIndex = featureIndex + "\t" + nextIndex;
         }
-        System.out.println();
 //        String newIndex = featureIndex.replaceFirst("\t[0-9]+\t$", "");
         String newIndex = featureIndex.trim();
         return newIndex;
