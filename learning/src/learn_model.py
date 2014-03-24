@@ -319,8 +319,8 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     if transformer is not None:
         log.info("Running feature selection %s" % str(transformer))
 
-        log.debug("X_train dimensions before fit_transform(): %s,%s" % X_train.shape)
-        log.debug("y_train dimensions before fit_transform(): %s" % y_train.shape)
+#         log.debug("X_train dimensions before fit_transform(): %s,%s" % X_train.shape)
+#         log.debug("y_train dimensions before fit_transform(): %s" % y_train.shape)
 
         X_train = transformer.fit_transform(X_train, y_train)
         #selected_features = np.asarray(transformer.get_feature_names())[X_train.get_support()]
@@ -349,6 +349,7 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     log.info("Running learning algorithm %s" % str(estimator))
     estimator.fit(X_train, y_train)
 
+    y_hat = None
     if (X_test is not None) and (y_test is not None):
         log.info("Predicting unseen data using the trained model...")
         y_hat = estimator.predict(X_test)
@@ -401,6 +402,11 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
         with open("predicted.csv", 'w') as _fout:
             for _x,  _y in zip(y_test, y_hat):
                 print >> _fout,  "%f\t%f" % (_x,  _y)
+    
+#     print("fit_predict: printing y_hat")
+#     print(y_hat)
+    return y_hat
+        
 
 def run(config):
     '''
@@ -431,23 +437,46 @@ def run(config):
     y_test_path = config.get("y_test", None)
 
     separator = config.get("separator", DEFAULT_SEP)
-
     labels_path = config.get("labels", None)
-
     scale = config.get("scale", True)
 
-    log.info("Opening input files ...")
-    log.debug("X_train: %s" % x_train_path)
-    log.debug("y_train: %s" % y_train_path)
-    log.debug("X_test: %s" % x_test_path)
-    log.debug("y_test_path: %s" % y_test_path)
+#     log.info("Opening input files ...")
+#     log.debug("X_train: %s" % x_train_path)
+#     log.debug("y_train: %s" % y_train_path)
+#     log.debug("X_test: %s" % x_test_path)
+#     log.debug("y_test_path: %s" % y_test_path)
 
-    # Chris - working - allow specification of the ORIGINAL dataset (not the one already split into train/test 
     # open feature and response files
-    X_train, y_train, X_test, y_test = \
-        load_files([x_train_path, y_train_path, x_test_path, y_test_path])
+#     X_train_frame, y_train_frame, X_test_frame, y_test_frame = \
+#         load_files([x_train_path, y_train_path, x_test_path, y_test_path])
 
-    print("printing shapes...")
+    # working - initialize logger which will maintain metadata about each run
+    # predictions, which were wrong, feature names, which features were dropped, which features were the best, etc...
+    
+
+    # TODO: move feature and score path to config file
+    features_file_name = '/home/chris/projects/quest-new/output/wmt2014/source.en.tok_to_target.es.tok.out'
+    scores_file_name = '/home/chris/projects/random_indexing/python/wmt2014/quality_estimation/data/perceived_PE_effort/task1-1_en-es_training/en-es_score.train'
+    X_train_frame, y_train_frame, X_test_frame, y_test_frame, logger = \
+        prep_data_for_ml(features_file_name, scores_file_name)
+
+    # SECTION - convert to numpy/sklearn formats
+
+    X_train = X_train_frame.values
+#     X_train = np.random.rand(X_train.shape[0], X_train.shape[1])
+
+    # numpy/scikit learn need a no-dimensional object for projection at some point, not necessary when y_train is a Series
+    #y_train = y_train_frame.values[:,0]
+    y_train = y_train_frame.values
+
+    X_test = X_test_frame.values
+#     X_test = np.random.rand(X_test.shape[0], X_test.shape[1])
+
+    # numpy/scikit learn need a no-dimensional object for projection at some point
+    #y_test = y_test_frame.values[:,0]
+    y_test = y_test_frame.values
+
+    print("printing shapes of the data...")
     print(X_train.shape)
     print(y_train.shape)
     print(X_test.shape)
@@ -457,6 +486,12 @@ def run(config):
     #open_datasets(x_train_path, y_train_path, x_test_path,
     
     # Chris: working - add proper preprocessing with pandas -- remove unscalable features (zeros and NaNs), make sure the feature indeces are preserved
+    # do 3-5 fold cv everytime
+    # how to use the native cv in scikit learn?
+    # EXAMPLE
+#     from sklearn import cross_validation
+#     clf = svm.SVC(kernel='linear', C=1)
+#     scores = cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5)
 
     if scale:
         # preprocess and execute mean removal
@@ -464,7 +499,11 @@ def run(config):
 
     # fits training data and predicts the test set using the trained model
     y_hat = fit_predict(config, X_train, y_train, X_test, y_test, config.get("ref_thd", None))
-
+    
+    # now log the prediction results
+    prediction_results = logger.map_predictions_to_row_indices(y_hat, y_test)
+    print("Finished learning - here are the prediction results: ")
+    print(prediction_results)
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
