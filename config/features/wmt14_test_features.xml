@@ -91,5 +91,5 @@
     <feature class="shef.mt.features.impl.bb.Feature9307"  index="9307"/>
     -->
     <!--  Chris Features  -->
-	<!--    <feature class="shef.mt.features.impl.bb.Feature7001"  index="7001" description="proportion of source tokens with a well-aligned target token (threshold >=0.5)"/>-->
+	<feature class="shef.mt.features.impl.bb.Feature7001"  index="7001" description="proportion of source tokens with a well-aligned target token (threshold >=0.5)"/>
 </features>

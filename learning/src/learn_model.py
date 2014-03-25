@@ -28,6 +28,9 @@ from evaluation_measures import root_mean_squared_error, mean_absolute_error
 from sklearn.ensemble.forest import ExtraTreesClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model.coordinate_descent import LassoCV
+
+from sklearn.linear_model import Perceptron, LogisticRegression
+
 from sklearn.linear_model.least_angle import LassoLarsCV, LassoLars
 from sklearn.linear_model.randomized_l1 import RandomizedLasso
 from sklearn.metrics.metrics import mean_squared_error, f1_score, \
@@ -35,6 +38,10 @@ from sklearn.metrics.metrics import mean_squared_error, f1_score, \
 from sklearn.svm.classes import SVR, SVC
 from sklearn_utils import scale_datasets, open_datasets, assert_number, \
     assert_string
+    
+# TESTING
+from mlp import *    
+
 import logging as log
 import numpy as np
 import os
@@ -194,6 +201,7 @@ def set_learning_method(config, X_train, y_train):
     """
     estimator = None
 
+    # Chris: TODO: check the optimization settings!
     learning_cfg = config.get("learning", None)
     if learning_cfg:
         p = learning_cfg.get("parameters", None)
@@ -202,6 +210,7 @@ def set_learning_method(config, X_train, y_train):
         set_scorer_functions(learning_cfg.get("scorer", ['mae', 'rmse']))
 
         method_name = learning_cfg.get("method", None)
+        
         if method_name == "SVR":
             if o:
                 tune_params = set_optimization_params(o)
@@ -223,6 +232,12 @@ def set_learning_method(config, X_train, y_train):
             else:
                 estimator = SVR()
 
+        elif method_name == "Perceptron":
+            log.info("Initializing a Perceptron classifier...")
+            estimator = Perceptron()
+        elif method_name == "LogisticRegression":
+            log.info("Initializing a LogisticRegression classifier...")
+            estimator = LogisticRegression()
         elif method_name == "SVC":
             if o:
                 tune_params = set_optimization_params(o)
@@ -287,6 +302,9 @@ def set_learning_method(config, X_train, y_train):
                                         verbose=False)
             else:
                 estimator = LassoLarsCV()
+      
+    # todo: move MLP to config            
+    # estimator = MLPClassifier()
 
     return estimator, scorers
 
@@ -310,9 +328,11 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     in the test set. Default is None.
     @param feature_index: a dict mapping the numpy arrays' column indices to feature names
     '''
-    # sets the selection method
+    
+    # sets the feature selection method
     # if the selection is happening here, then the mapping of features to indices should also happen here
-    transformer = set_selection_method(config)
+    #transformer = set_selection_method(config)
+    transformer = None
 
     # if the system is configured to run feature selection
     # runs it and modifies the datasets to the new dimensions
@@ -348,6 +368,32 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     estimator, scorers = set_learning_method(config, X_train, y_train)
     log.info("Running learning algorithm %s" % str(estimator))
     estimator.fit(X_train, y_train)
+    
+    
+    # TESTING: check the logistic regression decision functions for confidence
+    decision_functions = estimator.decision_function(X_test)
+    print("printing decision functions:")
+    print(decision_functions.shape)
+    print(estimator.classes_)
+    
+    # map into objects with class names
+    class_scores = [ {'1': row[0], '2': row[1], '3': row[2]} for row in decision_functions ]
+    print("len class_scores: %i" % len(class_scores))
+    surely_ones = []
+    for idx,r in enumerate(class_scores):
+        top = sorted(r.items(), key=lambda x: x[1], reverse=True)
+        # the ones that are ones that i'm confident about - i'm gonna take y'all out homey
+        if top[0][0] is '1':
+            value_difference = top[0][1] - top[1][1]
+            surely_ones.append({ 'index': idx, 'scores': top, 'value_diff': value_difference, 'actual': y_test[idx]})
+        
+    surely_ones = sorted(surely_ones, key= lambda x: x['value_diff'], reverse=True)
+    print('Heres surely ones:')
+    for r in surely_ones:
+        print(r)
+    
+    # END Logistic regression decision functions
+
 
     y_hat = None
     if (X_test is not None) and (y_test is not None):
@@ -452,7 +498,6 @@ def run(config):
 
     # working - initialize logger which will maintain metadata about each run
     # predictions, which were wrong, feature names, which features were dropped, which features were the best, etc...
-    
 
     # TODO: move feature and score path to config file
     features_file_name = '/home/chris/projects/quest-new/output/wmt2014/source.en.tok_to_target.es.tok.out'
@@ -502,8 +547,10 @@ def run(config):
     
     # now log the prediction results
     prediction_results = logger.map_predictions_to_row_indices(y_hat, y_test)
-    print("Finished learning - here are the prediction results: ")
-    print(prediction_results)
+    logger.predictions = prediction_results
+    print("Writing log to: " + logger.log_file_name)
+    logger.write_log()
+    print("Finished learning...")
 
 def main(argv=None): # IGNORE:C0111
     '''Command line options.'''
