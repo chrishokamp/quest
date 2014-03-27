@@ -1,6 +1,3 @@
-/**
- *
- */
 package shef.mt.tools;
 
 import java.io.BufferedReader;

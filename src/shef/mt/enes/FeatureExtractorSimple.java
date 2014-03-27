@@ -195,6 +195,8 @@ public class FeatureExtractorSimple{
             if (line.hasOption("input")) {
                 // print the value of block-size
                 String[] files = line.getOptionValues("input");
+                
+                // these are static variables which are used throughout this class
                 sourceFile = files[0];
                 targetFile = files[1];
             }
@@ -330,13 +332,15 @@ public class FeatureExtractorSimple{
      * Computes the perplexity and log probability for the source file Required
      * by features 8-13
      */
-    // Chris: you need to know the ngram param of the language model
+
+    // Chris: you need to know the ngram param of the language model - i.e. what is the order of the LM?
     // The default calls to nge.runNGramPerplex use the overloaded implementation with a default order=3 (see tools.NGraMExec.java)
     private static void runNGramPPL() {
     	
     	System.out.println("inside runNgramPPL, sourceFile: " + sourceFile + " targetFile: " + targetFile);
     	
         // required by BB features 8-13
+    	// Chris - NGramExec will write a file with the perplexity output for every sentence 
         NGramExec nge = new NGramExec(
                 resourceManager.getString("tools.ngram.path"), forceRun);
         System.out.println("runNgramPPL");
@@ -344,16 +348,21 @@ public class FeatureExtractorSimple{
         String sourceOutput = input
                 + File.separator + sourceLang + File.separator + f.getName()
                 + ".ppl";
+
         f = new File(targetFile);
         String targetOutput = input
                 + File.separator + targetLang + File.separator + f.getName()
                 + ".ppl";
+        
+        // Chris - build the perplexity files which will be used by PPLProcessor later
         nge.runNGramPerplex(sourceFile, sourceOutput,
                 resourceManager.getString(sourceLang + ".lm"));
         System.out.println(resourceManager.getString(targetLang + ".lm"));
         nge.runNGramPerplex(targetFile, targetOutput,
                 resourceManager.getString(targetLang + ".lm"));
     }
+    
+// Chris - TODO: fix the method below -- currently doesn't work (extracted features are NaN)
 
     /**
      * Computes the perplexity and log probability for the POS tagged target
@@ -610,11 +619,12 @@ public class FeatureExtractorSimple{
                 + resourceManager.getString("tools.ngram.output.ext");
         System.out.println("pplTargetPath is: " + pplTargetPath);
 
-
-        String pplPOSTargetPath = resourceManager.getString("input")
-                + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
-                + resourceManager.getString("tools.ngram.output.ext");
+        // Chris: this is never used
+//        String pplPOSTargetPath = resourceManager.getString("input")
+//                + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
+//                + resourceManager.getString("tools.ngram.output.ext");
         
+        // Chris: run the perplexity
         runNGramPPL();
 
         FileModel fm = new FileModel(sourceFile,
@@ -624,11 +634,10 @@ public class FeatureExtractorSimple{
         //     resourceManager.getString("source" + ".corpus"));
         
 
+        // Chris - working here - how to get POS + stopword perplexity of target sentences?
         // Chris - initialize the PPLProcessors with the resource names in the string array
-        PPLProcessor pplProcSource = new PPLProcessor(pplSourcePath,
-                new String[]{"logprob", "ppl", "ppl1"});
-        PPLProcessor pplProcTarget = new PPLProcessor(pplTargetPath,
-                new String[]{"logprob", "ppl", "ppl1"});
+        PPLProcessor pplProcSource = new PPLProcessor(pplSourcePath, new String[]{"logprob", "ppl", "ppl1"});
+        PPLProcessor pplProcTarget = new PPLProcessor(pplTargetPath, new String[]{"logprob", "ppl", "ppl1"});
         System.out.println("Initialized PPL processors");
 
         String sourcePosOutput = null;
@@ -636,15 +645,15 @@ public class FeatureExtractorSimple{
 
         PPLProcessor pplPosTarget = null;
         if (!isBaseline) {
-        	System.out.println("THIS IS NOT THE BASELINE");
+        	System.out.println("THIS IS NOT THE BASELINE - running pplPosTarget");
+        	
+// TODO: test for bugs here
             sourcePosOutput = runPOS(sourceFile, sourceLang, "source");
             targetPosOutput = runPOS(targetFile, targetLang, "target");
 
             String targetPPLPos = runNGramPPLPos(targetPosOutput + PosTagger.getXPOS());
             System.out.println("---------TARGET PPLPOS: " + targetPPLPos);
-            pplPosTarget = new PPLProcessor(targetPPLPos,
-                    new String[]{"poslogprob", "posppl", "posppl1"});
-
+            pplPosTarget = new PPLProcessor(targetPPLPos, new String[]{"poslogprob", "posppl", "posppl1"});
         }
 
         loadGiza();
@@ -847,20 +856,27 @@ public class FeatureExtractorSimple{
                 if (posTargetExists) {
                     posTargetProc.processSentence(targetSent);
                 }
+                
+                // Set the ngrams[] property on the sentence
                 sourceSent.computeNGrams(3);
                 targetSent.computeNGrams(3);
+
+                // each PPLProcessor has been initialized with its own pplFile, so we can do the same thing for POS + Stopword language models
+                // The calls to processNextSentence actually parse the SRILM perplexity output (via their pplFile property)
                 pplProcSource.processNextSentence(sourceSent);
                 pplProcTarget.processNextSentence(targetSent);
-//                if (!isBaseline) {
-//                    pplPosTarget.processNextSentence(targetSent);
-//                }
+                
+                if (!isBaseline) {
+                	System.out.println("Now getting the POS perplexity for the next target sentence");
+                    pplPosTarget.processNextSentence(targetSent);
+                }
              
                 //lefterav: Parse code here
                 // Chris - working on getting syntactic features
         
                 if(bp){
-                sourceParserProcessor.processNextSentence(sourceSent);
-            	targetParserProcessor.processNextSentence(targetSent);
+	                sourceParserProcessor.processNextSentence(sourceSent);
+	            	targetParserProcessor.processNextSentence(targetSent);
                 }
                 
                 if(tm){
@@ -1091,6 +1107,7 @@ public void run() {
         String pplPOSTargetPath = resourceManager.getString("input")
                 + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
                 + resourceManager.getString("tools.ngram.output.ext");
+
         runNGramPPL();
 
         PPLProcessor pplProcSource = new PPLProcessor(pplSourcePath,

@@ -9,8 +9,11 @@ import java.io.*;
 /**
  * Processes a file containing ngram probabilities and perplexities and sets the
  * corresponding values to the current sentence
+ * 
+ * This class requires the SRILM ngram output format
  *
  * @author Catalina Hallett
+ * modified by Chris Hokamp
  *
  */
 public class PPLProcessor extends ResourceProcessor {
@@ -22,8 +25,10 @@ public class PPLProcessor extends ResourceProcessor {
     public PPLProcessor(String pplFile, String[] valNames) {
 
         try {
+        	// Chris: the br moves through the file under the guidance of FeatureExtractor (i.e. sentence-by-sentence) this is a really risky implementation!
             br = new BufferedReader(new InputStreamReader(new FileInputStream(pplFile), "utf-8"));
-            //                  System.out.println(br);
+            
+            // Chris - Val names are currently "logprob", "ppl", "ppl1"
             this.valNames = valNames;
             this.pplFile = pplFile;
         } catch (Exception e) {
@@ -35,8 +40,12 @@ public class PPLProcessor extends ResourceProcessor {
         }
     }
 
+    // Chris: this method actually parses the SRILM output
     public void processNextSentence(Sentence s) {
+    	// TODO: add test - the sentence must have the ngrams[] property set?
+    	
         try {
+        	// Chris: the br needs to be at the right place in the file(!) risky (see constructor)...
             String line = br.readLine();
             if (line == null) {
                 System.out.println("line==null in " + new File(pplFile).getAbsolutePath() + " sent:" + s.getIndex() + " " + s.getText());

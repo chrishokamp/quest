@@ -6,4 +6,11 @@
 
 #java -Xmx1g -XX:+UseConcMarkSweepGC -classpath bin:lib/commons-cli-1.2.jar:lib/stanford-postagger.jar:lib/BerkeleyParser-1.7.jar shef.mt.enes.FeatureExtractorSimple -lang english spanish -input input/source.en input/target.es -mode bb -config config/wmt14-config_en-es.properties
 # testing with old config
-java -Xmx1g -XX:+UseConcMarkSweepGC -classpath bin:lib/commons-cli-1.2.jar:lib/stanford-postagger.jar:lib/BerkeleyParser-1.7.jar shef.mt.enes.FeatureExtractorSimple -lang english spanish -input input/source.en input/target.es -mode bb -config config/wmt14-config_en-es.properties
+
+task=$1
+language_subdirectory=$2
+
+# TODO - add suffixes
+# TODO - list all command-line params here
+
+java -Xmx1g -XX:+UseConcMarkSweepGC -classpath bin:lib/commons-cli-1.2.jar:lib/stanford-postagger.jar:lib/BerkeleyParser-1.7.jar shef.mt.enes.FeatureExtractorSimple -input input/${task}/${language_subdirectory}/source.en input/${task}/${language_subdirectory}/input/target.de -mode bb -config config/wmt14-config_en-es.properties

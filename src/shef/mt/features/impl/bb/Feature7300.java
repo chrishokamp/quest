@@ -1,46 +1,31 @@
-/**
- * 
- */
 package shef.mt.features.impl.bb;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-
 import shef.mt.features.impl.Feature;
-import shef.mt.features.util.Sentence;
-import shef.mt.tools.Giza;
 
 /**
- * proportion of unigrams aligned with >=0.5 probability in giza1  
+ * Stopword + POS LM perplexity  
  * 
  * @author Chris Hokamp 
  */
-public class Feature7001 extends Feature {
 
-	public Feature7001(){
-		setIndex(7001);
-		setDescription("proportion of unigrams aligned with >=0.5 probability in giza1");
-        HashSet<String> res = new HashSet<String>();
-		res.add("Giza");
-		setResources(res);
-	}
-	
-	// utility method
-	private boolean containsWithThreshold(HashMap<String,Float> testMap, Float threshold) {
-		if (threshold > 1) {
-			return false;
-		}
-		Iterator<Map.Entry<String,Float>> it = testMap.entrySet().iterator();
-        Map.Entry<String, Float> entry;
-		while(it.hasNext()) {
-			entry = it.next();
-			if (entry.getValue() >= threshold) {
-				return true;
-			}
-		}
-		return false;
+
+// Working:
+// 1- map the target sentence to the POS + STOPWORD representation
+// 2- to process a sentence, get the POS and check if the original token is a stopword or not
+// 
+
+// 3- understand runNGramPPL()
+// in NGramExec.java, this is their command: String execProcess = path + "ngram -lm " + lmFile + " -order ? -debug 1 -ppl " + inputFile + " > " + outputFile;
+//  
+
+public class Feature7300 extends Feature {
+
+	public Feature7300(){
+		setIndex(7300);
+		setDescription("");
+//        HashSet<String> res = new HashSet<String>();
+//		res.add("Giza");
+//		setResources(res);
 	}
 	
 	// for each token in source, check if there is a token in target which aligns with a high probability
@@ -68,4 +53,7 @@ public class Feature7001 extends Feature {
             setValue(numAlignments / noTokens);
         }
 	}
+	
+	
+
 }

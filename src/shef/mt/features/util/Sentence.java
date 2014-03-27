@@ -141,6 +141,7 @@ public class Sentence {
         return size;
     }
 
+    // This computes and sets the ngrams instance ArrayList
     public void computeNGrams(int ngSize) {
         ngrams = new ArrayList[ngSize];
         String[] tokens = sentence.split(" ");

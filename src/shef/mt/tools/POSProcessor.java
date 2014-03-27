@@ -18,7 +18,7 @@ public class POSProcessor {
 //    BufferedWriter bwXPos;
 
     /**
-     * initialise a POSProcessor from an input file The POSProcessor expect an
+     * initialise a POSProcessor from an input file The POSProcessor expects an
      * input file in a fixed format, where each line is of the type:<br> <i>word
      * DT	word</i> (tokens separated by tab) <br>
      *

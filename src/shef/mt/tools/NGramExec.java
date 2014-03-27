@@ -30,6 +30,7 @@ public class NGramExec {
         forceRun = val;
     }
 
+    // Chris: where/when is this used?
     public void runNGramCount(String inputFile, String outputFile, int nSize) {
         File f = new File(outputFile);
         if (f.exists() && !forceRun) {
@@ -38,10 +39,14 @@ public class NGramExec {
             return;
         }
         long start = System.currentTimeMillis();
+        
+        // just for logging
         Logger.log("Running ngram on input file:" + inputFile);
         String execProcess = path + "ngram-count -order " + nSize + " -interpolate -text " + inputFile + " -lm " + outputFile;
-//		System.out.println(execProcess);
         Logger.log("Executing: " + execProcess);
+//		System.out.println(execProcess);
+        // end logging
+        
         try {
             String[] args = new String[]{path + "ngram-count", "-order", nSize + "", "-interpolate", "-text", inputFile, "-lm", outputFile};
             ProcessBuilder pb = new ProcessBuilder(args);
@@ -54,9 +59,11 @@ public class NGramExec {
             Logger.log(e.getStackTrace().toString());
         }
         long end = System.currentTimeMillis() - start;
-        Logger.log("Finished computing perplexities in " + end / 1000f + " sec");
+        Logger.log("Finished running ngram and building language model in " + end / 1000f + " sec");
+
     }
 
+    // Chris: this is for the call when we know the lm order
     public void runNGramPerplex(String inputFile, String outputFile, String lmFile, int nSize) {
         //             System.out.println("running ngram perplexities on input file:"+inputFile+" with lm file: "+lmFile);
         File f = new File(outputFile);
@@ -67,10 +74,12 @@ public class NGramExec {
         }
         long start = System.currentTimeMillis();
 
-        Logger.log("Running ngram for computing perplexities on input file:" + inputFile + " with lm file: " + lmFile);
         // just used for logging
+        Logger.log("Running ngram for computing perplexities on input file:" + inputFile + " with lm file: " + lmFile);
         String execProcess = path + "ngram -lm " + lmFile + " -order ? -debug 1 -ppl " + inputFile + " > " + outputFile;
         Logger.log("Executing: " + execProcess);
+        // end logging
+        
         try {
             String[] args = new String[]{path + "ngram", "-lm", lmFile, "-order", nSize + "", "-debug", "1", "-ppl", inputFile};
             FileWriter fw = new FileWriter(outputFile);
@@ -86,6 +95,7 @@ public class NGramExec {
 
             while ((line = br.readLine()) != null) {
                 fw.write(line);
+                // Chris: can we change this line ending?
                 fw.write("\r\n");
             }
             fw.close();
@@ -111,7 +121,7 @@ public class NGramExec {
         File f = new File(outputFile);
         System.out.println("Executing ngramperplex on " + inputFile + " with lm=" + lmFile + " into " + outputFile);
         if (!this.forceRun && f.exists()) {
-            Logger.log("Output file " + outputFile + " already exists. Ngram will not run");
+            Logger.log("Output file " + outputFile + " already exists. runNgramPerplex will not run");
             System.out.println("Output file " + outputFile + " already exists. Ngram will not run");
             return;
         }
