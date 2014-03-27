@@ -27,6 +27,7 @@ public class FileModel {
     public FileModel(String inFile, String sourceCorpus) {
         Logger.log("Building the word model for the input file");
         System.out.println("Building the input file model");
+        System.out.println("inFile: " + inFile + " sourceCorpus: " + sourceCorpus);
         long start = System.currentTimeMillis();
         //System.out.println(inFile+"  "+sourceCorpus);
         words = new HashMap<String, Integer>();

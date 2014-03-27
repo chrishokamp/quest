@@ -1,5 +1,8 @@
 package shef.mt.tools;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import shef.mt.util.Logger;
 
 /**
@@ -13,6 +16,9 @@ public class PosTagger extends Resource {
     String name = "";
     String path = "";
     String lang;
+    
+    Set<String> stopset;
+
     String[] args = null;
     String input;
     String output;
@@ -72,6 +78,13 @@ public class PosTagger extends Resource {
 	public PosTagger() {
         super(null);
         Logger.log("***********Initiating PosTagger***************");
+
+	    // Working - hardcode this for testing - change to load language-specific stoplists
+	    String[] stoplist = {"I","a","about","an","are","as","at","be","by","com","for","from","how","in","is","it","of","on","or","that","the","this","to","was","what","when","where","who","will","with","the","www"};
+	    stopset = new HashSet<String>();
+	    for (String s: stoplist) {
+	    	stopset.add(s);
+	    }
     }
 
     public void setParameters(String lang, String tagName, String exePath, String input, String output) {
@@ -85,6 +98,13 @@ public class PosTagger extends Resource {
         this.input = input;
         this.output = output;
     }
+    
+    // Chris - added for POS + Stopword
+//    public void setStoplist(String stoplist) {
+//        Logger.log("PosTagger:  loading stoplist: " + stoplist);
+//        // TODO: load from file (currently hardcoded)
+//        this.stoplist = stoplist;
+//    }
 
     public PosTagger(String lang, String tagName, String exePath, String input, String output, ResourceProcessor posProc) {
         super(posProc);

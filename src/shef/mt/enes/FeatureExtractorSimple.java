@@ -274,7 +274,6 @@ public class FeatureExtractorSimple{
 
     }
 
-	
     /**
      * runs the part of speech tagger
      * @param file input file
@@ -283,6 +282,8 @@ public class FeatureExtractorSimple{
      * @return path to the output file of the POS tagger
      */
     public String runPOS(String file, String lang, String type) {
+    	
+    	// the pos tagger is: shef.mt.tools.PosTreeTagger
         String posName = resourceManager.getString(lang + ".postagger");
         String langResPath = input + File.separator + lang;
         File f = new File(file);
@@ -310,7 +311,7 @@ public class FeatureExtractorSimple{
         return outPath;
 
     }
-
+    
     private static void loadGiza() {
 
         String gizaPath = resourceManager.getString("pair." + sourceLang
@@ -363,6 +364,7 @@ public class FeatureExtractorSimple{
     }
     
 // Chris - TODO: fix the method below -- currently doesn't work (extracted features are NaN)
+// Chris - TODO: duplicate the method below for stop + pos language models
 
     /**
      * Computes the perplexity and log probability for the POS tagged target
@@ -374,20 +376,51 @@ public class FeatureExtractorSimple{
      * @param posFile file tagged with parts-of-speech
      */
     private String runNGramPPLPos(String posFile) {
+    	System.out.println("runNGramPPLPos - input file is: " + posFile);
         NGramExec nge = new NGramExec(
                 resourceManager.getString("tools.ngram.path"), forceRun);
 
         File f = new File(posFile);
+        
+        // posTargetOutput is the new filename
         String posTargetOutput = input
                 + File.separator + targetLang + File.separator + f.getName()
                 + resourceManager.getString("tools.ngram.output.ext");
+        
+        // the poslm must be in the resources, otherwise everything will fail
         nge.runNGramPerplex(posFile, posTargetOutput,
                 resourceManager.getString(targetLang + ".poslm"));
         return posTargetOutput;
     }
 
     /**
-     * Performs some basic processing of the input source and target files For
+     * Computes the perplexity and log probability for the POS + Stopword target file
+     * this function could be merged with:
+     * @seerunNGramPPL() but I separated them to make the code more readable
+     *
+     * @param tokenFile file with tokenized text (should align exactly with posFile)
+     * @param posFile file tagged with parts-of-speech
+     * @param stopWordFile the location of the stopword list that we want to use
+     */
+//    private String runNGramPPLStopPos(String tokenFile, String posFile, String stopWordFile) {
+//        NGramExec nge = new NGramExec(
+//                resourceManager.getString("tools.ngram.path"), forceRun);
+//
+//        // where do we get posStopFile? 
+//        File f = new File(posStopFile);
+//        String posStopTargetOutput = input
+//                + File.separator + targetLang + File.separator + f.getName()
+//                + resourceManager.getString("tools.ngram.output.ext");
+//        
+//        // the posStopFile must be created before this
+//        // params: input posStopFile (change to pos+stops), desired output filename, language model
+//        nge.runNGramPerplex(posStopFile, posTargetOutput,
+//                resourceManager.getString(targetLang + ".poslm"));
+//        return posStopTargetOutput;
+//    }
+
+    /**
+     * Performs some basic processing of the input source and target files. For
      * English, this consists of converting the input to lower case and
      * tokenizing For Arabic, this consists of transliteration and tokenization.
      * Please note that the current tools used for tokenizing Arabic also
@@ -610,6 +643,7 @@ public class FeatureExtractorSimple{
         String out = resourceManager.getString("output") + File.separator + outputFileName;
         System.out.println("Output will be: " + out);
         
+        // now the perplexity parameters
         String pplSourcePath = resourceManager.getString("input")
                 + File.separator + sourceLang + File.separator + sourceFileName
                 + resourceManager.getString("tools.ngram.output.ext");
@@ -620,11 +654,11 @@ public class FeatureExtractorSimple{
         System.out.println("pplTargetPath is: " + pplTargetPath);
 
         // Chris: this is never used
-//        String pplPOSTargetPath = resourceManager.getString("input")
-//                + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
-//                + resourceManager.getString("tools.ngram.output.ext");
+        String pplPOSTargetPath = resourceManager.getString("input")
+                + File.separator + targetLang + File.separator + targetFileName + PosTagger.getXPOS()
+                + resourceManager.getString("tools.ngram.output.ext");
         
-        // Chris: run the perplexity
+        // Chris: run the NGram perplexity
         runNGramPPL();
 
         FileModel fm = new FileModel(sourceFile,
@@ -632,28 +666,43 @@ public class FeatureExtractorSimple{
 
         // FileModel fm = new FileModel(sourceFile,
         //     resourceManager.getString("source" + ".corpus"));
-        
 
         // Chris - working here - how to get POS + stopword perplexity of target sentences?
         // Chris - initialize the PPLProcessors with the resource names in the string array
         PPLProcessor pplProcSource = new PPLProcessor(pplSourcePath, new String[]{"logprob", "ppl", "ppl1"});
         PPLProcessor pplProcTarget = new PPLProcessor(pplTargetPath, new String[]{"logprob", "ppl", "ppl1"});
-        System.out.println("Initialized PPL processors");
-
+        
         String sourcePosOutput = null;
         String targetPosOutput = null;
 
         PPLProcessor pplPosTarget = null;
+        PPLProcessor pplProcStopPosTarget = null;
         if (!isBaseline) {
         	System.out.println("THIS IS NOT THE BASELINE - running pplPosTarget");
         	
-// TODO: test for bugs here
+        	// run the pos tagging, and get the output file names
+        	// does the .XPOS get added here?
             sourcePosOutput = runPOS(sourceFile, sourceLang, "source");
             targetPosOutput = runPOS(targetFile, targetLang, "target");
 
+            // Chris: what is PosTagger.getXPOS() - checking - it's just the string ".XPOS"
+            // what does runNGramPPLPos do - it runs NGramExec.runNGramPerplex, and returns the output file name
+            // where does .XPOS get created?
             String targetPPLPos = runNGramPPLPos(targetPosOutput + PosTagger.getXPOS());
             System.out.println("---------TARGET PPLPOS: " + targetPPLPos);
+            
+            // Chris - why are the keys (poslogprob, ...) different? -- because we can only register 1 value per key on the Sentence?
             pplPosTarget = new PPLProcessor(targetPPLPos, new String[]{"poslogprob", "posppl", "posppl1"});
+            // Working - create a new PPLProcessor for the Stopword+POS LM
+            // "stopposlogprob", "stopposppl", "stopposppl1"
+            
+            // we need to have the POS-tagged output first
+// TODO: check for errors - we don't have these models for every direction yet
+            // Working - make a new method?
+            // TESTING...
+//            String targetStopPosPPL = runNGramPPLPos
+//            pplProcStopPosTarget = new PPLProcessor(targetStopPosPPL, new String[]{"stopposlogprob", "stopposppl", "stopposppl1");
+//            System.out.println("Initialized Source and Target PPL processors");
         }
 
         loadGiza();
@@ -675,8 +724,6 @@ public class FeatureExtractorSimple{
         context.setTargetFilePath(targetFile);
         MQMManager.getInstance().globalProcessing(context);
         
-        
-        
         try {
             BufferedReader brSource = new BufferedReader(new FileReader(
                     sourceFile));
@@ -684,8 +731,6 @@ public class FeatureExtractorSimple{
                     targetFile));
             BufferedWriter output = new BufferedWriter(new FileWriter(out));
             // Chris - write feature names as the top line of the TSV
-            
-            
             
             BufferedReader posSource = null;
             BufferedReader posTarget = null;
@@ -695,13 +740,10 @@ public class FeatureExtractorSimple{
                     .isRegistered("targetPosTagger");
             POSProcessor posSourceProc = null;
             POSProcessor posTargetProc = null;
-            
           
             //lefterav: Berkeley parser modifications start here
             //Check if user has defined the grammar files for source 
             //and target language
-            
-           // Chris - the Berkeley parser syntactic features aren't working, trying to fix this....
 
            //   if ( ResourceManager.isRegistered("BParser")){   
            boolean bp = false; 
@@ -816,17 +858,6 @@ public class FeatureExtractorSimple{
              */
 
             // Chris: this is where we actually calculate the features for each line in the data
-            // print the first line in the tsv as a column index
-            // Chris - testing 
-            System.out.println("FeatureExtractorSimple: printing features");
-////                featureManager.printFeatures();
-            String orgFeatureIndexString = featureManager.printFeatureIndices();
-            System.out.println("the original sorted feature indeces: " + orgFeatureIndexString);
-//            output.write(featureIndexString);
-//            output.newLine();
-            // end testing
-            
-            
             //read in each line from the source and target files
             //create a sentence from each
             //process each sentence
@@ -835,7 +866,6 @@ public class FeatureExtractorSimple{
             System.out.println("printing the resources...");
             ResourceManager.printResources();
             
-//            String newFeatureIndexString = featureManager.printFeatureIndices();
             boolean firstTime = true;
             while ((lineSource != null) && (lineTarget != null)) {
 
@@ -846,9 +876,6 @@ public class FeatureExtractorSimple{
                 System.out.println("Processing sentence "+sentCount);
                 System.out.println("SOURCE: " + sourceSent.getText());
                 System.out.println("TARGET: " + targetSent.getText());
-//                System.out.println("the original feature index was: " + featureIndexString);
-//                System.out.println("the one right before this loop was: " + newFeatureIndexString);
-//                System.out.println("now if i print feature indices, its: " + featureManager.printFeatureIndices());
                 
                 if (posSourceExists) {
                     posSourceProc.processSentence(sourceSent);
@@ -866,14 +893,14 @@ public class FeatureExtractorSimple{
                 pplProcSource.processNextSentence(sourceSent);
                 pplProcTarget.processNextSentence(targetSent);
                 
+                // pplProcStopPosTarget.processNextSentence(targetSent);
+                
                 if (!isBaseline) {
                 	System.out.println("Now getting the POS perplexity for the next target sentence");
                     pplPosTarget.processNextSentence(targetSent);
                 }
              
-                //lefterav: Parse code here
-                // Chris - working on getting syntactic features
-        
+                // Berkely Parser
                 if(bp){
 	                sourceParserProcessor.processNextSentence(sourceSent);
 	            	targetParserProcessor.processNextSentence(targetSent);
@@ -899,7 +926,7 @@ public class FeatureExtractorSimple{
                 
                 ++sentCount;
                 
-               // Chris: simple hack to fix feature ordering bug 
+               // Chris: simple hack to fix feature ordering bug (features which don't get used get removed, so the indexes are wrong
                if (firstTime) {
             	   System.out.println("it's the first time");
             	   String featureIndexString = featureManager.printFeatureIndices();

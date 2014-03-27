@@ -16,7 +16,11 @@ import shef.mt.features.impl.Feature;
 
 // 3- understand runNGramPPL()
 // in NGramExec.java, this is their command: String execProcess = path + "ngram -lm " + lmFile + " -order ? -debug 1 -ppl " + inputFile + " > " + outputFile;
-//  
+// --- what is their output file?
+
+//   - they are writing the raw ngram output to the perplexity file in NGramExec.java
+
+
 
 public class Feature7300 extends Feature {
 

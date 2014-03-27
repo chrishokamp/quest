@@ -40,9 +40,8 @@ public class PPLProcessor extends ResourceProcessor {
         }
     }
 
-    // Chris: this method actually parses the SRILM output
+    // Chris: this method actually parses the SRILM output, so the file needs to be in that format
     public void processNextSentence(Sentence s) {
-    	// TODO: add test - the sentence must have the ngrams[] property set?
     	
         try {
         	// Chris: the br needs to be at the right place in the file(!) risky (see constructor)...

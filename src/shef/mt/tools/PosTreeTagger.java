@@ -21,6 +21,7 @@ public class PosTreeTagger extends PosTagger {
     public PosTreeTagger(String lang, String tagName, String tagPath, String input, String output, ResourceProcessor resProc) {
         super(lang, tagName, tagPath, input, output, resProc);
         tempInput = input + ".temp";
+        
     }
 
     @Override
@@ -35,6 +36,8 @@ public class PosTreeTagger extends PosTagger {
                 ResourceManager.registerResource(lang + "PosTagger");
                 return output;
             }
+            
+            // path is the exePath of the tagger
             String[] args = {path, input};
             ProcessBuilder pb = new ProcessBuilder(args);
 
@@ -48,8 +51,13 @@ public class PosTreeTagger extends PosTagger {
             //BufferedReader brIn = new BufferedReader(new InputStreamReader(new FileInputStream(input), "UTF8"));
             BufferedWriter bw = new BufferedWriter(new FileWriter(output));
             BufferedWriter bwXPos = new BufferedWriter(new FileWriter(output + getXPOS()));
+            // Chris: working here - interpolate stops and pos
+            BufferedWriter bwXPosStops = new BufferedWriter(new FileWriter(output + getXPOS() + ".stops"));
             BufferedWriter bwPosLemm = new BufferedWriter(new FileWriter(output + getXPOS()+".lemm"));
+            
+            // reads the output of the POSTagger
             BufferedReader brOut = new BufferedReader(new InputStreamReader(stdout));
+
             String[] split;
             String inputLine;
             String line = "";
@@ -79,14 +87,25 @@ public class PosTreeTagger extends PosTagger {
                     //System.in.read();
 
                     bwXPos.write(split[1] + " ");
+                    // originalToken_POS_lemma
                     bwPosLemm.write(split[0] + "_" + split[1] + "_" + split[2] + " ");
+                    
+                    // if the stopWord HashSet contains this word, write the word literally, if not, write the POS as usual
+                    if (stopset.contains(split[0])) {
+//                    	write(split[0] + "_" + split[1] + "_" + split[2] + " ");
+                    	bwXPosStops.write(split[0] + " ");
+                    } else {
+                    	bwXPosStops.write(split[1] + " ");
+                    }
+                    
                     bw.write(line);
                     bw.newLine();
                 }
 
                 bwXPos.newLine();
                 bwPosLemm.newLine();
-               //if (line != null){ 
+                bwXPosStops.newLine();
+                
                 bw.write(line);
                 
                 bw.newLine();}
@@ -97,6 +116,7 @@ public class PosTreeTagger extends PosTagger {
             bw.close();
             bwXPos.close();
             bwPosLemm.close();
+            bwXPosStops.close();
 
             BufferedReader brCleanUp = new BufferedReader(new InputStreamReader(stderr));
             while ((line = brCleanUp.readLine()) != null) {
