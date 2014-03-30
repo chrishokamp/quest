@@ -41,6 +41,8 @@ public class PPLProcessor extends ResourceProcessor {
     }
 
     // Chris: this method actually parses the SRILM output, so the file needs to be in that format
+    // Chris: valNames[] is used instead of a Map to feature names
+    // using valNames allows the different logprob/perplexity features to reuse this method (logprob, poslogprob)
     public void processNextSentence(Sentence s) {
     	
         try {
@@ -59,6 +61,7 @@ public class PPLProcessor extends ResourceProcessor {
             //ok, we found the line containing perplexities/log values
             String[] values = line.split(" ");
             //values we are interested in are at positions 3,5,7
+            // these should be logprob, ppl, ppl1
 //			System.out.println(line);
             if (values[3].equals("undefined")) {
                 s.setValue(valNames[0], 0.0f);

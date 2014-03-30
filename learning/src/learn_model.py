@@ -30,6 +30,11 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model.coordinate_descent import LassoCV
 
 from sklearn.linear_model import Perceptron, LogisticRegression
+from sklearn import cross_validation
+from sklearn import preprocessing
+from sklearn.dummy import DummyRegressor
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection.univariate_selection import f_regression
 
 from sklearn.linear_model.least_angle import LassoLarsCV, LassoLars
 from sklearn.linear_model.randomized_l1 import RandomizedLasso
@@ -77,7 +82,7 @@ def set_selection_method(config):
     Given the configuration settings, this function instantiates the configured
     feature selection method initialized with the preset parameters.
 
-    TODO: implement the same method using reflection (load the class dinamically
+    TODO: implement the same method using reflection (load the class dynamically
     at runtime)
 
     @param config: the configuration file object loaded using yaml.load()
@@ -128,6 +133,10 @@ def set_selection_method(config):
                                      verbose=True)
             else:
                 transformer = ExtraTreesClassifier()
+                
+        # TESTING other feature selection methods
+        #transformer = SelectKBest(f_regression, k=10)
+#         transformer = SelectPercentile()
 
     return transformer
 
@@ -309,7 +318,13 @@ def set_learning_method(config, X_train, y_train):
     return estimator, scorers
 
 
-def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None, feature_index=None):
+
+# WORKING - add cross-validation
+def cross_validate(all_training_data, all_scores):
+    pass
+
+# WORKING - split this into predict/cross-validate functions
+def fit_predict(config, all_training, all_scores, X_train, y_train, X_test=None, y_test=None, ref_thd=None, feature_index=None):
     '''
     Uses the configuration dictionary settings to train a model using the
     specified training algorithm. If set, also evaluates the trained model
@@ -331,18 +346,19 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     
     # sets the feature selection method
     # if the selection is happening here, then the mapping of features to indices should also happen here
-    #transformer = set_selection_method(config)
-    transformer = None
+    transformer = set_selection_method(config)
+    #transformer = None
 
     # if the system is configured to run feature selection
     # runs it and modifies the datasets to the new dimensions
     if transformer is not None:
         log.info("Running feature selection %s" % str(transformer))
 
-#         log.debug("X_train dimensions before fit_transform(): %s,%s" % X_train.shape)
-#         log.debug("y_train dimensions before fit_transform(): %s" % y_train.shape)
+        log.debug("X_train dimensions before fit_transform(): %s,%s" % X_train.shape)
+        log.debug("y_train dimensions before fit_transform(): %s" % y_train.shape)
 
         X_train = transformer.fit_transform(X_train, y_train)
+        log.debug("X_train dimensions after fit_transform(): %s,%s" % X_train.shape)
         #selected_features = np.asarray(transformer.get_feature_names())[X_train.get_support()]
         log.debug("printing the selected features: ")
         log.debug("scores_:")
@@ -369,36 +385,67 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     log.info("Running learning algorithm %s" % str(estimator))
     estimator.fit(X_train, y_train)
     
+    #clf = DummyClassifier(strategy='most_frequent',random_state=0)
+#     clf = DummyClassifier(strategy='stratified',random_state=0)
+    clf = DummyRegressor()
+    clf.fit(X_train, y_train)
+    
+# TODO: switch to shuffle-split
+# >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
+# ...     random_state=0)
+# >>> len(ss)
+# 3
+# >>> print(ss)                                           
+# ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
+# 
+# >>> for train_index, test_index in ss:
+# ...     print("%s %s" % (train_index, test_index))
+
+
+    # Default scoring for the given estimator
+    scores = cross_validation.cross_val_score(estimator, all_training, all_scores, cv=10)
+#     scores = cross_validation.cross_val_score(estimator, all_training, all_scores, cv=5, scoring='mean_squared_error')
+
+    print("PRINTING CROSS-VALIDATION SCORES")
+    # Working - how to get mean absolute error?
+    print scores
+    print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    
+    #Accuracy: 0.97 (+/- 0.07)
     
     # TESTING: check the logistic regression decision functions for confidence
-    decision_functions = estimator.decision_function(X_test)
-    print("printing decision functions:")
-    print(decision_functions.shape)
-    print(estimator.classes_)
-    
-    # map into objects with class names
-    class_scores = [ {'1': row[0], '2': row[1], '3': row[2]} for row in decision_functions ]
-    print("len class_scores: %i" % len(class_scores))
-    surely_ones = []
-    for idx,r in enumerate(class_scores):
-        top = sorted(r.items(), key=lambda x: x[1], reverse=True)
-        # the ones that are ones that i'm confident about - i'm gonna take y'all out homey
-        if top[0][0] is '1':
-            value_difference = top[0][1] - top[1][1]
-            surely_ones.append({ 'index': idx, 'scores': top, 'value_diff': value_difference, 'actual': y_test[idx]})
-        
-    surely_ones = sorted(surely_ones, key= lambda x: x['value_diff'], reverse=True)
-    print('Heres surely ones:')
-    for r in surely_ones:
-        print(r)
+#     decision_functions = estimator.decision_function(X_test)
+#     print("printing decision functions:")
+#     print(decision_functions.shape)
+#     print(estimator.classes_)
+#     
+#     # map into objects with class names
+#     class_scores = [ {'1': row[0], '2': row[1], '3': row[2]} for row in decision_functions ]
+#     print("len class_scores: %i" % len(class_scores))
+#     surely_ones = []
+#     for idx,r in enumerate(class_scores):
+#         top = sorted(r.items(), key=lambda x: x[1], reverse=True)
+#         # the ones that are ones that i'm confident about - i'm gonna take y'all out homey
+#         if top[0][0] is '1':
+#             value_difference = top[0][1] - top[1][1]
+#             surely_ones.append({ 'index': idx, 'scores': top, 'value_diff': value_difference, 'actual': y_test[idx]})
+#         
+#     surely_ones = sorted(surely_ones, key= lambda x: x['value_diff'], reverse=True)
+#     print('Heres surely ones:')
+#     for r in surely_ones:
+#         print(r)
     
     # END Logistic regression decision functions
-
 
     y_hat = None
     if (X_test is not None) and (y_test is not None):
         log.info("Predicting unseen data using the trained model...")
+
         y_hat = estimator.predict(X_test)
+        
+#         print("TESTING DUMMY CLASSIFIER")
+#         y_hat = clf.predict(X_test)
+
         log.info("Evaluating prediction on the test set...")
         for scorer_name, scorer_func in scorers:
             v = scorer_func(y_test, y_hat)
@@ -454,23 +501,26 @@ def fit_predict(config, X_train, y_train, X_test=None, y_test=None, ref_thd=None
     return y_hat
         
 
+# TODO - add code to run cross validation
+# take a set of 10 dataframes with ~equal numbers of instances, and run 10-fold cv
+
 def run(config):
     '''
     Runs the main code of the program. Checks for mandatory parameters, opens
     input files and performs the learning steps.
     '''
     # check if the mandatory parameters are set in the config file
-    x_train_path = config.get("x_train", None)
-    if not x_train_path:
-        msg = "'x_train' option not found in the configuration file. \
-        The training dataset is mandatory."
-        raise Exception(msg)
-
-    y_train_path = config.get("y_train", None)
-    if not y_train_path:
-        msg = "'y_train' option not found in the configuration file. \
-        The training dataset is mandatory."
-        raise Exception(msg)
+#     x_train_path = config.get("x_train", None)
+#     if not x_train_path:
+#         msg = "'x_train' option not found in the configuration file. \
+#         The training dataset is mandatory."
+#         raise Exception(msg)
+# 
+#     y_train_path = config.get("y_train", None)
+#     if not y_train_path:
+#         msg = "'y_train' option not found in the configuration file. \
+#         The training dataset is mandatory."
+#         raise Exception(msg)
 
     learning = config.get("learning", None)
     if not learning:
@@ -499,10 +549,22 @@ def run(config):
     # working - initialize logger which will maintain metadata about each run
     # predictions, which were wrong, feature names, which features were dropped, which features were the best, etc...
 
+    features_file_name = config.get("feature_file", None)
+    if not features_file_name:
+        msg = "'features_file_name' option not found in the configuration file. \
+        The training dataset is mandatory."
+        raise Exception(msg)
+ 
+    scores_file_name = config.get("scores_file", None)
+    if not scores_file_name:
+        msg = "'scores_file_name' option not found in the configuration file. \
+        The training dataset is mandatory."
+        raise Exception(msg)
+
     # TODO: move feature and score path to config file
-    features_file_name = '/home/chris/projects/quest-new/output/wmt2014/source.en.tok_to_target.es.tok.out'
-    scores_file_name = '/home/chris/projects/random_indexing/python/wmt2014/quality_estimation/data/perceived_PE_effort/task1-1_en-es_training/en-es_score.train'
-    X_train_frame, y_train_frame, X_test_frame, y_test_frame, logger = \
+#     features_file_name = '/home/chris/projects/quest-new/output/wmt2014/source.en.tok_to_target.es.tok.out'
+#     scores_file_name = '/home/chris/projects/random_indexing/python/wmt2014/quality_estimation/data/perceived_PE_effort/task1-1_en-es_training/en-es_score.train'
+    X_train_frame, y_train_frame, X_test_frame, y_test_frame, all_train_frame, all_scores_frame, logger = \
         prep_data_for_ml(features_file_name, scores_file_name)
 
     # SECTION - convert to numpy/sklearn formats
@@ -527,23 +589,36 @@ def run(config):
     print(X_test.shape)
     print(y_test.shape)
     
+    all_scores = all_scores_frame.values
+    all_training = all_train_frame.values
+    
+    
     #X_train, y_train, X_test, y_test, labels = \
     #open_datasets(x_train_path, y_train_path, x_test_path,
     
     # Chris: working - add proper preprocessing with pandas -- remove unscalable features (zeros and NaNs), make sure the feature indeces are preserved
     # do 3-5 fold cv everytime
-    # how to use the native cv in scikit learn?
-    # EXAMPLE
-#     from sklearn import cross_validation
-#     clf = svm.SVC(kernel='linear', C=1)
-#     scores = cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5)
 
     if scale:
         # preprocess and execute mean removal
         X_train, X_test = scale_datasets(X_train, X_test)
+        
+    # this scales the whole dataset
+    if scale:
+        all_training = preprocessing.scale(all_training)
+
+    # WORKING - add cross validation
+    # how to use the native cv in scikit learn?
+    # EXAMPLE
+#     from sklearn import cross_validation
+#     clf = svm.SVC(kernel='linear', C=1)
+#     scores = cross_validation.cross_val_score(clf, all_training, all_scores, cv=5)
+    
+
 
     # fits training data and predicts the test set using the trained model
-    y_hat = fit_predict(config, X_train, y_train, X_test, y_test, config.get("ref_thd", None))
+#     y_hat = fit_predict(config, X_train, y_train, X_test, y_test, config.get("ref_thd", None))
+    y_hat = fit_predict(config, all_training, all_scores, X_train, y_train, X_test, y_test, config.get("ref_thd", None))
     
     # now log the prediction results
     prediction_results = logger.map_predictions_to_row_indices(y_hat, y_test)
@@ -552,7 +627,7 @@ def run(config):
     logger.write_log()
     print("Finished learning...")
 
-def main(argv=None): # IGNORE:C0111
+def main(argv=None): # IGNORE:C01
     '''Command line options.'''
 
     if argv is None:

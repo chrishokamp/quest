@@ -261,7 +261,6 @@ public class FeatureExtractorSimple{
                 isBaseline = true;
             }
 
-
         } catch (ParseException exp) {
             System.out.println("Unexpected exception:" + exp.getMessage());
         }
@@ -338,6 +337,7 @@ public class FeatureExtractorSimple{
     // The default calls to nge.runNGramPerplex use the overloaded implementation with a default order=3 (see tools.NGraMExec.java)
     private static void runNGramPPL() {
     	
+    	// TODO: fix this - here we get sourceFile and targetFile from outside, but we want to be able to pass anything into this function
     	System.out.println("inside runNgramPPL, sourceFile: " + sourceFile + " targetFile: " + targetFile);
     	
         // required by BB features 8-13
@@ -393,31 +393,31 @@ public class FeatureExtractorSimple{
         return posTargetOutput;
     }
 
+    // TODO: recombine this code with run NGramPPL()
     /**
      * Computes the perplexity and log probability for the POS + Stopword target file
-     * this function could be merged with:
-     * @seerunNGramPPL() but I separated them to make the code more readable
      *
-     * @param tokenFile file with tokenized text (should align exactly with posFile)
-     * @param posFile file tagged with parts-of-speech
-     * @param stopWordFile the location of the stopword list that we want to use
-     */
-//    private String runNGramPPLStopPos(String tokenFile, String posFile, String stopWordFile) {
-//        NGramExec nge = new NGramExec(
-//                resourceManager.getString("tools.ngram.path"), forceRun);
-//
-//        // where do we get posStopFile? 
-//        File f = new File(posStopFile);
-//        String posStopTargetOutput = input
-//                + File.separator + targetLang + File.separator + f.getName()
-//                + resourceManager.getString("tools.ngram.output.ext");
-//        
-//        // the posStopFile must be created before this
-//        // params: input posStopFile (change to pos+stops), desired output filename, language model
-//        nge.runNGramPerplex(posStopFile, posTargetOutput,
-//                resourceManager.getString(targetLang + ".poslm"));
-//        return posStopTargetOutput;
-//    }
+     * @param posAndStops pos+stopword tokenized file
+     **/
+//    private String runNGramPPLStopPos(String File, String posFile, String stopWordFile) {
+    private String runNGramPPLStopPos(String posAndStops) {
+        NGramExec nge = new NGramExec(
+                resourceManager.getString("tools.ngram.path"), forceRun);
+
+        // where do we get posStopFile? 
+        File f = new File(posAndStops);
+
+        String posStopTargetOutput = input
+                + File.separator + targetLang + File.separator + f.getName()
+                + resourceManager.getString("tools.ngram.output.ext");
+        
+        // the posStopFile must be created before this
+        // params: input posStopFile (change to pos+stops), desired output filename, language model
+        nge.runNGramPerplex(posAndStops, posStopTargetOutput,
+        		// working - add a file extension for stop+pos lm
+                resourceManager.getString(targetLang + ".poslm"));
+        return posStopTargetOutput;
+    }
 
     /**
      * Performs some basic processing of the input source and target files. For
@@ -681,28 +681,25 @@ public class FeatureExtractorSimple{
         	System.out.println("THIS IS NOT THE BASELINE - running pplPosTarget");
         	
         	// run the pos tagging, and get the output file names
-        	// does the .XPOS get added here?
+        	// does the .XPOS get added here? - yes, and also the stop+POS representation
             sourcePosOutput = runPOS(sourceFile, sourceLang, "source");
             targetPosOutput = runPOS(targetFile, targetLang, "target");
 
             // Chris: what is PosTagger.getXPOS() - checking - it's just the string ".XPOS"
             // what does runNGramPPLPos do - it runs NGramExec.runNGramPerplex, and returns the output file name
-            // where does .XPOS get created?
             String targetPPLPos = runNGramPPLPos(targetPosOutput + PosTagger.getXPOS());
             System.out.println("---------TARGET PPLPOS: " + targetPPLPos);
             
-            // Chris - why are the keys (poslogprob, ...) different? -- because we can only register 1 value per key on the Sentence?
             pplPosTarget = new PPLProcessor(targetPPLPos, new String[]{"poslogprob", "posppl", "posppl1"});
-            // Working - create a new PPLProcessor for the Stopword+POS LM
-            // "stopposlogprob", "stopposppl", "stopposppl1"
-            
-            // we need to have the POS-tagged output first
+
 // TODO: check for errors - we don't have these models for every direction yet
-            // Working - make a new method?
-            // TESTING...
-//            String targetStopPosPPL = runNGramPPLPos
-//            pplProcStopPosTarget = new PPLProcessor(targetStopPosPPL, new String[]{"stopposlogprob", "stopposppl", "stopposppl1");
-//            System.out.println("Initialized Source and Target PPL processors");
+            String targetStopPosPPL = runNGramPPLStopPos(targetPosOutput + PosTagger.getXPOS() + ".stops");
+            System.out.println("---------TARGET STOP+POS PERPLEXITY: " + targetStopPosPPL);
+            
+            // TODO: set these parameters on the features that use them
+            pplProcStopPosTarget = new PPLProcessor(targetStopPosPPL, new String[]{"stopposlogprob", "stopposppl", "stopposppl1"});
+
+            System.out.println("Initialized all PPL processors");
         }
 
         loadGiza();
@@ -898,6 +895,8 @@ public class FeatureExtractorSimple{
                 if (!isBaseline) {
                 	System.out.println("Now getting the POS perplexity for the next target sentence");
                     pplPosTarget.processNextSentence(targetSent);
+                	System.out.println("Now getting the Stopword+POS perplexity for the next target sentence");
+                    pplProcStopPosTarget.processNextSentence(targetSent);
                 }
              
                 // Berkely Parser
