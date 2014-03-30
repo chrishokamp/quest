@@ -529,8 +529,8 @@ def run(config):
         raise Exception(msg)
 
     # checks for the optional parameters
-    x_test_path = config.get("x_test", None)
-    y_test_path = config.get("y_test", None)
+    # x_test_path = config.get("x_test", None)
+    # y_test_path = config.get("y_test", None)
 
     separator = config.get("separator", DEFAULT_SEP)
     labels_path = config.get("labels", None)
@@ -560,10 +560,12 @@ def run(config):
         msg = "'scores_file_name' option not found in the configuration file. \
         The training dataset is mandatory."
         raise Exception(msg)
+    
+    cross_validation_file_name = config.get("cross_validation_split_file")
+    # WORKING: return N tuples of (X_train, y_train, X_test, y_test) dataframes, and move all of the learning code into a loop
+    cv_tuples = prep_data_for_cross_validation(features_file_name, scores_file_name, cross_validation_file_name)
+    
 
-    # TODO: move feature and score path to config file
-#     features_file_name = '/home/chris/projects/quest-new/output/wmt2014/source.en.tok_to_target.es.tok.out'
-#     scores_file_name = '/home/chris/projects/random_indexing/python/wmt2014/quality_estimation/data/perceived_PE_effort/task1-1_en-es_training/en-es_score.train'
     X_train_frame, y_train_frame, X_test_frame, y_test_frame, all_train_frame, all_scores_frame, logger = \
         prep_data_for_ml(features_file_name, scores_file_name)
 
@@ -592,12 +594,6 @@ def run(config):
     all_scores = all_scores_frame.values
     all_training = all_train_frame.values
     
-    
-    #X_train, y_train, X_test, y_test, labels = \
-    #open_datasets(x_train_path, y_train_path, x_test_path,
-    
-    # Chris: working - add proper preprocessing with pandas -- remove unscalable features (zeros and NaNs), make sure the feature indeces are preserved
-    # do 3-5 fold cv everytime
 
     if scale:
         # preprocess and execute mean removal
@@ -608,11 +604,12 @@ def run(config):
         all_training = preprocessing.scale(all_training)
 
     # WORKING - add cross validation
-    # how to use the native cv in scikit learn?
-    # EXAMPLE
 #     from sklearn import cross_validation
 #     clf = svm.SVC(kernel='linear', C=1)
 #     scores = cross_validation.cross_val_score(clf, all_training, all_scores, cv=5)
+    
+    # splice the test set out of the list
+    # use pandas iloc with all_scores and all_training to splice out the test data
     
 
 
