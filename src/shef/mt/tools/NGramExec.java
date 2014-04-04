@@ -165,4 +165,11 @@ public class NGramExec {
         Logger.log("Finished computing perplexities in " + end / 1000f + " sec");
 
     }
+    
+    // WORKING - add method to get the worst NGram from a list -- needs to call SRILM on the fly?
+    // Answer - no. take a list of every NGram in the sentence, iterate for each sentence, and compute the worst one
+    // $ ngram -lm /home/chris/projects/quest-new/lang_resources/english/lm.europarl-nc.en -zeroprob-word sandy -ppl out
+
+//    ngram -lm /home/chris/projects/quest-new/lang_resources/english/lm.europarl-nc.en -debug 1 -skipoovs 1 -ppl out
+    
 }

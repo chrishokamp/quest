@@ -97,19 +97,19 @@ public class Giza extends Resource {
             translations.put(p, prob);
             
             HashMap<String, Float> targetTokenMap;
-            // working -- check if we've already seen this word or not
             if (translationMap.containsKey(word)) {
             	targetTokenMap = translationMap.get(word);
+            	targetTokenMap.put(trans, prob);
+
             } else {
             	targetTokenMap = new HashMap<String, Float>();
             	targetTokenMap.put(trans, prob);
             	translationMap.put(word, targetTokenMap);
             	
             }
-            //translationMap.put(key, value)
             
-//			System.out.println("added translation: "+p);
         }
+        
         //HashMap<Float,Integer> probs;
         int[] probs;
         Iterator probsIt;

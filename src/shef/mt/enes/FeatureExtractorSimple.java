@@ -17,6 +17,7 @@ import shef.mt.tools.Giza;
 import shef.mt.tools.TopicDistributionProcessor;
 import shef.mt.tools.BParserProcessor;
 import shef.mt.tools.NGramProcessor;
+import shef.mt.tools.WorstNgram;
 import shef.mt.tools.PPLProcessor;
 import shef.mt.tools.PosTagger;
 import shef.mt.tools.GlobalLexicon;
@@ -364,7 +365,6 @@ public class FeatureExtractorSimple{
     }
     
 // Chris - TODO: fix the method below -- currently doesn't work (extracted features are NaN)
-// Chris - TODO: duplicate the method below for stop + pos language models
 
     /**
      * Computes the perplexity and log probability for the POS tagged target
@@ -413,9 +413,7 @@ public class FeatureExtractorSimple{
         
         // the posStopFile must be created before this
         // params: input posStopFile (change to pos+stops), desired output filename, language model
-        nge.runNGramPerplex(posAndStops, posStopTargetOutput,
-        		// working - add a file extension for stop+pos lm
-                resourceManager.getString(targetLang + ".poslm"));
+        nge.runNGramPerplex(posAndStops, posStopTargetOutput,resourceManager.getString(targetLang + ".poslm"));
         return posStopTargetOutput;
     }
 
@@ -660,6 +658,9 @@ public class FeatureExtractorSimple{
         
         // Chris: run the NGram perplexity
         runNGramPPL();
+        
+        // Init a WorstNGram finder
+        WorstNgram worstNG = new WorstNgram();
 
         FileModel fm = new FileModel(sourceFile,
                 resourceManager.getString(sourceLang + ".corpus"));
@@ -884,18 +885,22 @@ public class FeatureExtractorSimple{
                 // Set the ngrams[] property on the sentence
                 sourceSent.computeNGrams(3);
                 targetSent.computeNGrams(3);
+                
+                // TESTING - printing the ngrams works
+                worstNG.processNextSentence(sourceSent);
 
                 // each PPLProcessor has been initialized with its own pplFile, so we can do the same thing for POS + Stopword language models
                 // The calls to processNextSentence actually parse the SRILM perplexity output (via their pplFile property)
                 pplProcSource.processNextSentence(sourceSent);
                 pplProcTarget.processNextSentence(targetSent);
                 
-                // pplProcStopPosTarget.processNextSentence(targetSent);
                 
                 if (!isBaseline) {
                 	System.out.println("Now getting the POS perplexity for the next target sentence");
                     pplPosTarget.processNextSentence(targetSent);
                 	System.out.println("Now getting the Stopword+POS perplexity for the next target sentence");
+
+                	// get the ppl for the stop+pos language model
                     pplProcStopPosTarget.processNextSentence(targetSent);
                 }
              

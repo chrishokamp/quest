@@ -51,8 +51,9 @@ public class PosTreeTagger extends PosTagger {
             //BufferedReader brIn = new BufferedReader(new InputStreamReader(new FileInputStream(input), "UTF8"));
             BufferedWriter bw = new BufferedWriter(new FileWriter(output));
             BufferedWriter bwXPos = new BufferedWriter(new FileWriter(output + getXPOS()));
-            // Chris: working here - interpolate stops and pos
+
             BufferedWriter bwXPosStops = new BufferedWriter(new FileWriter(output + getXPOS() + ".stops"));
+
             BufferedWriter bwPosLemm = new BufferedWriter(new FileWriter(output + getXPOS()+".lemm"));
             
             // reads the output of the POSTagger

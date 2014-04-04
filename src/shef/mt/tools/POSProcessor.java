@@ -1,7 +1,11 @@
 package shef.mt.tools;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+
 import shef.mt.features.util.Sentence;
-import java.io.*;
 
 
 /**
@@ -53,7 +57,9 @@ public class POSProcessor {
         int verbWords = 0;
         int pronWords = 0;
         int otherContentWords = 0;
+        List<String> tokens = new ArrayList<String>();
         int count = 0;
+        
 
         while (line != null && (count < tokCount)) {
             if (!line.trim().isEmpty()) {

@@ -15,6 +15,7 @@ import shef.mt.util.Logger;
 public class NGramProcessor {
 
     private String corpus;
+    // change this to modify the order of the produced language model
     private static int nSize = 3;
     private int[] ngramNos;
 

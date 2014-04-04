@@ -22,7 +22,6 @@ public class Feature1012 extends Feature {
 
     @Override
     public void run(Sentence source, Sentence target) {
-        // TODO Auto-generated method stub
         setValue((Float) target.getValue("logprob"));
     }
 }
